@@ -8,7 +8,7 @@
 - [x] Phase 2A – discovery_service.dart
 - [x] Phase 2B – socket_server.dart
 - [x] Phase 2C – transfer_service.dart
-- [ ] Phase 3A – permission_service.dart
+- [x] Phase 3A – permission_service.dart
 - [ ] Phase 3B – storage_service.dart
 - [ ] Phase 3C – providers.dart (Riverpod)
 - [ ] Phase 4A – devices_page + controller
