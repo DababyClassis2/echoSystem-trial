@@ -6,6 +6,7 @@ class TransferModel {
   final String fileName;
   final int fileSizeBytes;
   final int transferredBytes;
+  final double? speedBytesPerSec;
   final String status;
   final String direction;
   final String peerId;
@@ -19,6 +20,7 @@ class TransferModel {
     required this.fileName,
     required this.fileSizeBytes,
     this.transferredBytes = 0,
+    this.speedBytesPerSec,
     required this.status,
     required this.direction,
     required this.peerId,
@@ -34,9 +36,15 @@ class TransferModel {
   TransferDirection get transferDirection =>
       TransferDirection.values.firstWhere((e) => e.name == direction, orElse: () => TransferDirection.sending);
 
-  double get progressFraction {
-    if (fileSizeBytes == 0) return 0.0;
-    return (transferredBytes / fileSizeBytes).clamp(0.0, 1.0);
+  double get progress =>
+      (fileSizeBytes == 0) ? 0.0 : (transferredBytes / fileSizeBytes);
+
+  String get eta {
+    if (speedBytesPerSec == null || speedBytesPerSec! <= 0) return '—';
+    final remaining = fileSizeBytes - transferredBytes;
+    final secs = remaining / speedBytesPerSec!;
+    if (secs < 60) return '${secs.toStringAsFixed(0)}s';
+    return '${(secs / 60).toStringAsFixed(0)}m';
   }
 
   String get formattedSize {
@@ -56,6 +64,7 @@ class TransferModel {
     String? fileName,
     int? fileSizeBytes,
     int? transferredBytes,
+    double? speedBytesPerSec,
     String? status,
     String? direction,
     String? peerId,
@@ -69,6 +78,7 @@ class TransferModel {
       fileName: fileName ?? this.fileName,
       fileSizeBytes: fileSizeBytes ?? this.fileSizeBytes,
       transferredBytes: transferredBytes ?? this.transferredBytes,
+      speedBytesPerSec: speedBytesPerSec ?? this.speedBytesPerSec,
       status: status ?? this.status,
       direction: direction ?? this.direction,
       peerId: peerId ?? this.peerId,

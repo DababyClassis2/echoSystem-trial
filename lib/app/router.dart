@@ -6,6 +6,7 @@ import '../features/devices/devices_page.dart';
 import '../features/profile/profile_page.dart';
 import '../features/settings/settings_page.dart';
 import '../features/logs/logs_page.dart';
+import '../features/transfers/active_transfer_page.dart';
 import '../shared/widgets/shell_scaffold.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -36,6 +37,12 @@ final GoRouter appRouter = GoRouter(
       name: 'logs',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (_, __) => const LogsPage(),
+    ),
+    GoRoute(
+      path: '/transfers/active',
+      name: 'activeTransfers',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (_, __) => const ActiveTransferPage(),
     ),
   ],
 );
