@@ -33,7 +33,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     _serverPort = _getServerPort();
     _appVersion = _getAppVersion();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(profileProvider.notifier).load();
+      if (mounted) {
+        ref.read(profileProvider.notifier).load();
+      }
     });
   }
 
@@ -195,7 +197,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   void _showFolderPicker(BuildContext context, StorageService storage) async {
     final result = await FilePicker.platform.getDirectoryPath();
-    if (result != null) {
+    if (result != null && mounted) {
       storage.defaultSavePath = result;
       setState(() {});
     }
