@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/storage_service.dart';
 import '../services/permission_service.dart';
+import '../services/network_interface_service.dart';
 import '../network/discovery_service.dart';
 import '../network/socket_server.dart';
 import '../network/transfer_service.dart';
@@ -216,7 +218,67 @@ final discoveryServiceProvider = Provider<DiscoveryService>((ref) {
   return ref.watch(discoveryServiceWithPortProvider).value!;
 });
 
-// --- Helper: watch discovered devices from the future provider ---
-final discoveredDevicesFromServiceProvider = StreamProvider<List<DeviceModel>>((ref) {
-  return Stream<List<DeviceModel>>.empty();
+// --- Network interfaces provider ---
+final activeInterfacesProvider = FutureProvider<List<NetworkInterfaceInfo>>((ref) async {
+  return await NetworkInterfaceService.getActiveInterfaces();
+});
+
+// --- Discovery State ---
+class DiscoveryState {
+  final bool isScanning;
+  final List<DeviceModel> peers;
+  const DiscoveryState({this.isScanning = false, this.peers = const []});
+
+  DiscoveryState copyWith({bool? isScanning, List<DeviceModel>? peers}) {
+    return DiscoveryState(
+      isScanning: isScanning ?? this.isScanning,
+      peers: peers ?? this.peers,
+    );
+  }
+}
+
+class DiscoveryNotifier extends StateNotifier<DiscoveryState> {
+  final Ref ref;
+  DiscoveryNotifier(this.ref) : super(const DiscoveryState());
+
+  StreamSubscription? _subscription;
+
+  Future<void> startScan() async {
+    if (state.isScanning) return;
+    state = state.copyWith(isScanning: true);
+
+    try {
+      final discovery = await ref.read(discoveryServiceWithPortProvider.future);
+      _subscription?.cancel();
+      _subscription = discovery.devices.listen((devices) {
+        state = state.copyWith(peers: devices);
+      });
+    } catch (e) {
+      state = state.copyWith(isScanning: false);
+    }
+  }
+
+  Future<void> restartScan() async {
+    state = state.copyWith(isScanning: false, peers: []);
+    ref.invalidate(discoveryServiceWithPortProvider);
+    await startScan();
+  }
+
+  void stopScan() {
+    _subscription?.cancel();
+    _subscription = null;
+    state = state.copyWith(isScanning: false);
+  }
+}
+
+final discoveryProvider = StateNotifierProvider<DiscoveryNotifier, DiscoveryState>((ref) {
+  return DiscoveryNotifier(ref);
+});
+
+final discoveredPeersProvider = Provider<List<DeviceModel>>((ref) {
+  return ref.watch(discoveryProvider).peers;
+});
+
+final isDiscoveryActiveProvider = Provider<bool>((ref) {
+  return ref.watch(discoveryProvider).isScanning;
 });

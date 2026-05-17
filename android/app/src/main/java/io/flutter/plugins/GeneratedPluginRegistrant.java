@@ -70,5 +70,10 @@ public final class GeneratedPluginRegistrant {
     } catch (Exception e) {
       Log.e(TAG, "Error registering plugin url_launcher_android, io.flutter.plugins.urllauncher.UrlLauncherPlugin", e);
     }
+    try {
+      flutterEngine.getPlugins().add(new dev.flutternetwork.wifi.wifi_scan.WifiScanPlugin());
+    } catch (Exception e) {
+      Log.e(TAG, "Error registering plugin wifi_scan, dev.flutternetwork.wifi.wifi_scan.WifiScanPlugin", e);
+    }
   }
 }

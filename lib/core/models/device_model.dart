@@ -6,6 +6,8 @@ class DeviceModel {
   final bool isOnline;
   final int avatarColor;
   final DateTime lastSeen;
+  final String platform;
+  final String interfaceType;
 
   const DeviceModel({
     required this.id,
@@ -15,6 +17,8 @@ class DeviceModel {
     this.isOnline = true,
     this.avatarColor = 0xFF4A5B6E,
     required this.lastSeen,
+    this.platform = 'unknown',
+    this.interfaceType = 'unknown',
   });
 
   String get displayName => name.length > 20 ? '${name.substring(0, 20)}…' : name;
@@ -27,6 +31,8 @@ class DeviceModel {
     bool? isOnline,
     int? avatarColor,
     DateTime? lastSeen,
+    String? platform,
+    String? interfaceType,
   }) {
     return DeviceModel(
       id: id ?? this.id,
@@ -36,6 +42,8 @@ class DeviceModel {
       isOnline: isOnline ?? this.isOnline,
       avatarColor: avatarColor ?? this.avatarColor,
       lastSeen: lastSeen ?? this.lastSeen,
+      platform: platform ?? this.platform,
+      interfaceType: interfaceType ?? this.interfaceType,
     );
   }
 
@@ -47,6 +55,8 @@ class DeviceModel {
         isOnline: json['isOnline'] as bool? ?? true,
         avatarColor: json['avatarColor'] as int? ?? 0xFF4A5B6E,
         lastSeen: DateTime.parse(json['lastSeen'] as String),
+        platform: json['platform'] as String? ?? 'unknown',
+        interfaceType: json['interfaceType'] as String? ?? 'unknown',
       );
 
   Map<String, dynamic> toJson() => {
@@ -57,6 +67,8 @@ class DeviceModel {
         'isOnline': isOnline,
         'avatarColor': avatarColor,
         'lastSeen': lastSeen.toIso8601String(),
+        'platform': platform,
+        'interfaceType': interfaceType,
       };
 
   @override
