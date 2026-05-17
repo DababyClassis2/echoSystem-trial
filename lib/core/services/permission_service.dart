@@ -74,20 +74,8 @@ class PermissionService {
   }
 
   Future<bool> _isAndroidAPI33Plus() async {
-    if (WidgetsBinding.instance.rootContext == null || Theme.of(WidgetsBinding.instance.rootContext!).platform != TargetPlatform.android) {
-      return false;
-    }
-    // Use device_info_plus to get SDK version? Or just assume API 33+ based on Android version.
-    // For simplicity, we request all permissions on Android and let the system handle.
-    // More robust: use device_info_plus to check SDK_INT >= 33.
-    // For now, we'll use a pragmatic check: if nearbyWifiDevices permission exists, then API 33+.
-    // Since that permission exists only on API 33+, we can use it as a proxy.
-    try {
-      await Permission.nearbyWifiDevices.status;
-      return true;
-    } catch (e) {
-      return false;
-    }
+    // Assume Android 10+ (API 29) – safe default
+    return true;
   }
 
   bool _checkAllGrantedSync() {
