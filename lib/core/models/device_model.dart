@@ -1,28 +1,10 @@
-import 'package:hive/hive.dart';
-
-part 'device_model.g.dart';
-
-@HiveType(typeId: 0)
 class DeviceModel {
-  @HiveField(0)
   final String id;
-
-  @HiveField(1)
   final String name;
-
-  @HiveField(2)
   final String ipAddress;
-
-  @HiveField(3)
   final int port;
-
-  @HiveField(4)
   final bool isOnline;
-
-  @HiveField(5)
   final int avatarColor;
-
-  @HiveField(6)
   final DateTime lastSeen;
 
   const DeviceModel({
