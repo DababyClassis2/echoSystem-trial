@@ -18,4 +18,4 @@
 - [x] Phase 4E – logs_page.dart
 - [x] Phase 4F – settings_page.dart
 - [x] Phase 5B – Final integration
-- [x] Phase 5C – UI polish & update checker
+- [x] Phase 5C – Build Fixes & Improvements

@@ -18,6 +18,8 @@ dependencies:
   shared_preferences: ^2.2.3
   device_info_plus: ^10.1.0
   network_info_plus: ^6.0.0
+  package_info_plus: ^8.0.0
+  url_launcher: ^6.2.0
   nsd: ^4.0.4
   uuid: ^4.4.0
   hive: ^2.2.3

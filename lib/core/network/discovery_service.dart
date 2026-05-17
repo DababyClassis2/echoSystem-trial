@@ -8,10 +8,9 @@ class DiscoveryService {
   final String deviceName;
   final int port;
 
-  Nsd? _nsd;
-  String? _registrationId;
-  StreamController<List<DeviceModel>> _devicesController =
-      StreamController<List<DeviceModel>>.broadcast();
+  NsdService? _service;
+  NsdDiscovery? _discovery;
+  final StreamController<List<DeviceModel>> _devicesController = StreamController<List<DeviceModel>>.broadcast();
   final Map<String, DeviceModel> _devices = {};
 
   DiscoveryService({
@@ -23,8 +22,6 @@ class DiscoveryService {
   Stream<List<DeviceModel>> get devices => _devicesController.stream;
 
   Future<void> start() async {
-    _nsd = Nsd();
-    await _nsd!.init();
     await _advertise();
     await _discover();
   }
@@ -35,43 +32,41 @@ class DiscoveryService {
       'deviceName': deviceName,
       'port': port.toString(),
     };
-    _registrationId = await _nsd!.registerService(
-      SERVICE_TYPE,
-      deviceName,
-      port,
-      txt,
+    _service = NsdService(
+      serviceName: deviceName,
+      serviceType: SERVICE_TYPE,
+      port: port,
+      attributes: txt,
     );
+    await _service!.register();
   }
 
   Future<void> _discover() async {
-    _nsd!.discoverServices(SERVICE_TYPE).listen((NsdServiceInfo info) {
-      final existing = _devices[info.name];
-      if (existing != null && existing.ipAddress == info.host) {
-        return; // no change
-      }
-      if (info.host == null) return; // invalid
+    _discovery = NsdDiscovery(serviceType: SERVICE_TYPE);
+    _discovery!.stream.listen((event) {
+      final info = event.serviceInfo;
+      final txt = info.attributes;
+      if (info.host == null) return;
       final device = DeviceModel(
-        id: info.txt['deviceId'] ?? info.name,
-        name: info.txt['deviceName'] ?? info.name,
+        id: txt['deviceId'] ?? info.name,
+        name: txt['deviceName'] ?? info.name,
         ipAddress: info.host!,
-        port: int.tryParse(info.txt['port'] ?? '0') ?? 0,
+        port: int.tryParse(txt['port'] ?? '0') ?? 0,
         isOnline: true,
         lastSeen: DateTime.now(),
       );
       _devices[info.name] = device;
       _devicesController.add(_devices.values.toList());
     }, onError: (e) {
-      // log error but don't crash
+      // log error
     });
+    await _discovery!.start();
   }
 
   Future<void> stop() async {
-    if (_registrationId != null) {
-      await _nsd?.unregisterService(_registrationId!);
-    }
-    await _nsd?.stopDiscovery();
-    await _nsd?.close();
-    _devicesController.close();
+    await _service?.unregister();
+    await _discovery?.stop();
+    await _devicesController.close();
   }
 
   void dispose() {

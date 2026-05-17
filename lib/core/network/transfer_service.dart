@@ -129,7 +129,7 @@ class TransferService {
       sent += chunk.length;
       final elapsedSeconds = stopwatch.elapsedMilliseconds / 1000;
       final bytesPerSecond = elapsedSeconds > 0 ? sent / elapsedSeconds : 0;
-      _progressController?.add(TransferProgress(sent, file.sizeBytes, bytesPerSecond));
+      _progressController?.add(TransferProgress(sent, file.sizeBytes, bytesPerSecond.toDouble()));
     }
     stopwatch.stop();
     fileHandle.closeSync();
