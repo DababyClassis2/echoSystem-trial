@@ -138,7 +138,7 @@ class _IncomingDialogState extends ConsumerState<IncomingDialog> {
     final ext = widget.header.fileName.split('.').last.toLowerCase();
     if (['jpg', 'jpeg', 'png', 'gif', 'webp'].contains(ext)) return Icons.image;
     if (['mp4', 'mov', 'avi', 'mkv'].contains(ext)) return Icons.video_library;
-    if (['mp3', 'wav', 'aac', 'flac'].contains(ext)) return Icons.audio_track;
+    if (['mp3', 'wav', 'aac', 'flac'].contains(ext)) return Icons.audiotrack;
     if (['pdf', 'doc', 'docx', 'txt'].contains(ext)) return Icons.description;
     return Icons.insert_drive_file;
   }
@@ -157,5 +157,8 @@ Future<void> showIncomingDialog(BuildContext context, IncomingTransferHeader hea
     context: context,
     barrierDismissible: false,
     builder: (context) => IncomingDialog(header: header),
+  );
+}
+ontext) => IncomingDialog(header: header),
   );
 }
