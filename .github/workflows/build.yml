@@ -31,14 +31,6 @@ jobs:
           rm -rf android
           flutter create --project-name echosystem .
 
-      - name: Replace launcher icon
-        run: |
-          cp icon.png android/app/src/main/res/mipmap-mdpi/ic_launcher.png
-          cp icon.png android/app/src/main/res/mipmap-hdpi/ic_launcher.png
-          cp icon.png android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
-          cp icon.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
-          cp icon.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
-
       - name: Build APK
         run: |
           flutter pub get
