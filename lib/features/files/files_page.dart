@@ -18,9 +18,10 @@ class _FilesPageState extends ConsumerState<FilesPage> {
   @override
   void initState() {
     super.initState();
-    // Load history into provider (if not already loaded)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(transferHistoryProvider.notifier).loadFromStorage();
+      if (mounted) {
+        ref.read(transferHistoryProvider.notifier).loadFromStorage();
+      }
     });
   }
 
@@ -57,7 +58,6 @@ class _FilesPageState extends ConsumerState<FilesPage> {
       ),
       body: Column(
         children: [
-          // Filter chips
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
@@ -152,9 +152,11 @@ class _FilesPageState extends ConsumerState<FilesPage> {
             onPressed: () {
               controller.clearAllHistory();
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('History cleared')),
-              );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('History cleared')),
+                );
+              }
             },
             child: const Text('Clear', style: TextStyle(color: Colors.redAccent)),
           ),
@@ -166,7 +168,7 @@ class _FilesPageState extends ConsumerState<FilesPage> {
   void _openFile(TransferModel transfer, FilesController controller) {
     if (transfer.localPath != null && transfer.localPath!.isNotEmpty) {
       controller.openFile(transfer.localPath!);
-    } else {
+    } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('File not available locally')),
       );
@@ -189,9 +191,11 @@ class _FilesPageState extends ConsumerState<FilesPage> {
             onPressed: () {
               controller.deleteTransfer(id);
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Transfer record deleted')),
-              );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Transfer record deleted')),
+                );
+              }
             },
             child: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
           ),
