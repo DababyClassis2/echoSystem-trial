@@ -2,7 +2,7 @@
 
 - [x] Phase 0A – pubspec.yaml (dependencies)
 - [x] Phase 0B – AndroidManifest.xml
-- [ ] Phase 1A – device_model.dart
+- [x] Phase 1A – device_model.dart
 - [ ] Phase 1B – transfer_model.dart
 - [ ] Phase 1C – file_item_model.dart
 - [ ] Phase 2A – discovery_service.dart
