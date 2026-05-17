@@ -12,7 +12,10 @@ class FilesController {
   FilesController(this._ref);
 
   List<TransferModel> getHistory() {
-    return _ref.read(transferHistoryProvider);
+    return _ref.read(transferHistoryProvider).maybeWhen(
+          data: (data) => data,
+          orElse: () => [],
+        );
   }
 
   Future<void> deleteTransfer(String id) async {

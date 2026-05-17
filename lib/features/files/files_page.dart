@@ -27,95 +27,101 @@ class _FilesPageState extends ConsumerState<FilesPage> {
 
   @override
   Widget build(BuildContext context) {
-    final history = ref.watch(transferHistoryProvider);
+    final historyAsync = ref.watch(transferHistoryProvider);
     final controller = ref.watch(filesControllerProvider);
 
-    final filtered = history.where((t) {
-      switch (_filter) {
-        case TransferFilter.sent:
-          return t.transferDirection == TransferDirection.sending;
-        case TransferFilter.received:
-          return t.transferDirection == TransferDirection.receiving;
-        case TransferFilter.failed:
-          return t.transferStatus == TransferStatus.failed;
-        default:
-          return true;
-      }
-    }).toList();
+    return historyAsync.when(
+      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (err, st) => Scaffold(body: Center(child: Text('Error: $err'))),
+      data: (history) {
+        final filtered = history.where((t) {
+          switch (_filter) {
+            case TransferFilter.sent:
+              return t.transferDirection == TransferDirection.sending;
+            case TransferFilter.received:
+              return t.transferDirection == TransferDirection.receiving;
+            case TransferFilter.failed:
+              return t.transferStatus == TransferStatus.failed;
+            default:
+              return true;
+          }
+        }).toList();
 
-    final groups = controller.groupByDate(filtered);
+        final groups = controller.groupByDate(filtered);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Files'),
-        actions: [
-          if (history.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.delete_sweep),
-              onPressed: () => _showClearAllDialog(context, controller),
-            ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                _buildFilterChip('All', TransferFilter.all),
-                const SizedBox(width: 8),
-                _buildFilterChip('Sent', TransferFilter.sent),
-                const SizedBox(width: 8),
-                _buildFilterChip('Received', TransferFilter.received),
-                const SizedBox(width: 8),
-                _buildFilterChip('Failed', TransferFilter.failed),
-              ],
-            ),
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Files'),
+            actions: [
+              if (history.isNotEmpty)
+                IconButton(
+                  icon: const Icon(Icons.delete_sweep),
+                  onPressed: () => _showClearAllDialog(context, controller),
+                ),
+            ],
           ),
-          Expanded(
-            child: history.isEmpty
-                ? const Center(
-                    child: Text(
-                      'No transfers yet.\nShare files from the Devices tab.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: EchoColors.pewter),
-                    ),
-                  )
-                : groups.isEmpty
+          body: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    _buildFilterChip('All', TransferFilter.all),
+                    const SizedBox(width: 8),
+                    _buildFilterChip('Sent', TransferFilter.sent),
+                    const SizedBox(width: 8),
+                    _buildFilterChip('Received', TransferFilter.received),
+                    const SizedBox(width: 8),
+                    _buildFilterChip('Failed', TransferFilter.failed),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: history.isEmpty
                     ? const Center(
                         child: Text(
-                          'No transfers match the filter.',
+                          'No transfers yet.\nShare files from the Devices tab.',
+                          textAlign: TextAlign.center,
                           style: TextStyle(color: EchoColors.pewter),
                         ),
                       )
-                    : ListView(
-                        padding: const EdgeInsets.all(16),
-                        children: groups.entries.map((entry) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                entry.key,
-                                style: const TextStyle(
-                                  color: EchoColors.warmGold,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              ...entry.value.map((t) => _TransferTile(
-                                    transfer: t,
-                                    onTap: () => _openFile(t, controller),
-                                    onDelete: () => _deleteTransfer(t.id, controller),
-                                  )),
-                              const SizedBox(height: 16),
-                            ],
-                          );
-                        }).toList(),
-                      ),
+                    : groups.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'No transfers match the filter.',
+                              style: TextStyle(color: EchoColors.pewter),
+                            ),
+                          )
+                        : ListView(
+                            padding: const EdgeInsets.all(16),
+                            children: groups.entries.map((entry) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    entry.key,
+                                    style: const TextStyle(
+                                      color: EchoColors.warmGold,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ...entry.value.map((t) => _TransferTile(
+                                        transfer: t,
+                                        onTap: () => _openFile(t, controller),
+                                        onDelete: () => _deleteTransfer(t.id, controller),
+                                      )),
+                                  const SizedBox(height: 16),
+                                ],
+                              );
+                            }).toList(),
+                          ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 

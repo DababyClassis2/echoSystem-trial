@@ -56,46 +56,57 @@ final devicesProvider = StateNotifierProvider<DevicesNotifier, List<DeviceModel>
 });
 
 // --- StateNotifier for transfer history ---
-class TransferHistoryNotifier extends StateNotifier<List<TransferModel>> {
-  TransferHistoryNotifier(this.ref) : super([]);
+class TransferHistoryNotifier extends StateNotifier<AsyncValue<List<TransferModel>>> {
+  TransferHistoryNotifier(this.ref) : super(const AsyncValue.loading()) {
+    loadFromStorage();
+  }
   final Ref ref;
 
   void loadFromStorage() {
-    final storage = ref.read(storageServiceProvider);
-    state = storage.transferHistory;
+    try {
+      final storage = ref.read(storageServiceProvider);
+      state = AsyncValue.data(storage.transferHistory);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
   }
 
   Future<void> addTransfer(TransferModel transfer) async {
     final storage = ref.read(storageServiceProvider);
     await storage.addTransfer(transfer);
-    state = [...state, transfer];
+    final current = state.value ?? [];
+    state = AsyncValue.data([...current, transfer]);
   }
 
   Future<void> updateTransfer(TransferModel transfer) async {
     final storage = ref.read(storageServiceProvider);
     await storage.updateTransfer(transfer);
-    final index = state.indexWhere((t) => t.id == transfer.id);
+    final current = state.value ?? [];
+    final index = current.indexWhere((t) => t.id == transfer.id);
     if (index != -1) {
-      state = [...state]..[index] = transfer;
+      final newList = [...current];
+      newList[index] = transfer;
+      state = AsyncValue.data(newList);
     } else {
-      state = [...state, transfer];
+      state = AsyncValue.data([...current, transfer]);
     }
   }
 
   Future<void> deleteTransfer(String id) async {
     final storage = ref.read(storageServiceProvider);
     await storage.deleteTransfer(id);
-    state = state.where((t) => t.id != id).toList();
+    final current = state.value ?? [];
+    state = AsyncValue.data(current.where((t) => t.id != id).toList());
   }
 
   Future<void> clearAll() async {
     final storage = ref.read(storageServiceProvider);
     await storage.clearTransferHistory();
-    state = [];
+    state = const AsyncValue.data([]);
   }
 }
 
-final transferHistoryProvider = StateNotifierProvider<TransferHistoryNotifier, List<TransferModel>>((ref) {
+final transferHistoryProvider = StateNotifierProvider<TransferHistoryNotifier, AsyncValue<List<TransferModel>>>((ref) {
   return TransferHistoryNotifier(ref);
 });
 

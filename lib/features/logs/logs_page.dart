@@ -26,42 +26,48 @@ class _LogsPageState extends ConsumerState<LogsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final history = ref.watch(transferHistoryProvider);
+    final historyAsync = ref.watch(transferHistoryProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Logs'),
-        actions: [
-          if (history.isNotEmpty) ...[
-            IconButton(
-              icon: const Icon(Icons.download),
-              onPressed: () => _exportLogs(history),
-              tooltip: 'Export logs',
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete_sweep),
-              onPressed: () => _showClearAllDialog(context),
-              tooltip: 'Clear all logs',
-            ),
-          ],
-        ],
-      ),
-      body: history.isEmpty
-          ? const Center(
-              child: Text(
-                'No logs yet.\nTransfers will appear here.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: EchoColors.pewter),
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: history.length,
-              itemBuilder: (context, index) {
-                final transfer = history[index];
-                return _LogEntry(transfer: transfer);
-              },
-            ),
+    return historyAsync.when(
+      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (err, st) => Scaffold(body: Center(child: Text('Error: $err'))),
+      data: (history) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Logs'),
+            actions: [
+              if (history.isNotEmpty) ...[
+                IconButton(
+                  icon: const Icon(Icons.download),
+                  onPressed: () => _exportLogs(history),
+                  tooltip: 'Export logs',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_sweep),
+                  onPressed: () => _showClearAllDialog(context),
+                  tooltip: 'Clear all logs',
+                ),
+              ],
+            ],
+          ),
+          body: history.isEmpty
+              ? const Center(
+                  child: Text(
+                    'No logs yet.\nTransfers will appear here.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: EchoColors.pewter),
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: history.length,
+                  itemBuilder: (context, index) {
+                    final transfer = history[index];
+                    return _LogEntry(transfer: transfer);
+                  },
+                ),
+        );
+      },
     );
   }
 
