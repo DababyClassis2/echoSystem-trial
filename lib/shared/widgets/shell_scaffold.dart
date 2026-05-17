@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../app/theme.dart';
+import '../../core/providers/providers.dart';
 
-class ShellScaffold extends StatefulWidget {
+class ShellScaffold extends ConsumerStatefulWidget {
   final Widget child;
   const ShellScaffold({super.key, required this.child});
 
   @override
-  State<ShellScaffold> createState() => _ShellScaffoldState();
+  ConsumerState<ShellScaffold> createState() => _ShellScaffoldState();
 }
 
-class _ShellScaffoldState extends State<ShellScaffold> {
+class _ShellScaffoldState extends ConsumerState<ShellScaffold> {
   final PageController _pageController = PageController();
   static const _tabs = ['/home', '/files', '/devices', '/profile'];
 
@@ -24,13 +26,17 @@ class _ShellScaffoldState extends State<ShellScaffold> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(title: const Text('echoSystem')),
-      drawer: _buildDrawer(context),
+      appBar: AppBar(
+        title: const Text('echoSystem'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+      ),
+      drawer: _buildDrawer(context, ref),
       body: PageView(
         controller: _pageController,
         physics: const BouncingScrollPhysics(),
         onPageChanged: (i) => context.go(_tabs[i]),
-        children: [widget.child], // Note: ShellRoute usually handles child
+        children: [widget.child],
       ),
       bottomNavigationBar: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -44,13 +50,6 @@ class _ShellScaffoldState extends State<ShellScaffold> {
                 EchoColors.deepNavy.withValues(alpha: 0.98),
               ],
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.4),
-                blurRadius: 15,
-                offset: const Offset(0, -5),
-              ),
-            ],
           ),
           child: BottomNavigationBar(
             currentIndex: _locationIndex(context),
@@ -81,7 +80,10 @@ class _ShellScaffoldState extends State<ShellScaffold> {
     return idx < 0 ? 0 : idx;
   }
 
-  Widget _buildDrawer(BuildContext context) {
+  Widget _buildDrawer(BuildContext context, WidgetRef ref) {
+    final profileState = ref.watch(profileProvider);
+    final activeTransfers = ref.watch(activeTransfersProvider);
+    
     return Drawer(
       child: Container(
         decoration: BoxDecoration(
@@ -97,53 +99,112 @@ class _ShellScaffoldState extends State<ShellScaffold> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            DrawerHeader(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
+            UserAccountsDrawerHeader(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [EchoColors.chromeBlueGrey, EchoColors.navySlate],
                 ),
-                border: Border(
-                  bottom: BorderSide(color: EchoColors.warmGold.withValues(alpha: 0.3), width: 1),
+              ),
+              currentAccountPicture: CircleAvatar(
+                backgroundColor: Color(profileState.avatarColor),
+                child: Text(
+                  profileState.deviceName.isNotEmpty ? profileState.deviceName[0].toUpperCase() : 'E',
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: EchoColors.warmGold.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.share, color: EchoColors.warmGold, size: 32),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text('echoSystem', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w600)),
-                  const Text('Local Share', style: TextStyle(color: EchoColors.warmGold, fontSize: 14)),
-                ],
+              accountName: Text(
+                profileState.deviceName,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
               ),
+              accountEmail: const Text(
+                'Tap to edit profile',
+                style: TextStyle(color: EchoColors.pewter),
+              ),
+              onDetailsPressed: () {
+                Navigator.pop(context);
+                context.go('/profile');
+              },
             ),
-            _drawerItem(Icons.home, 'Home', () => context.go('/home')),
-            _drawerItem(Icons.folder, 'Files', () => context.go('/files')),
-            _drawerItem(Icons.devices, 'Devices', () => context.go('/devices')),
-            _drawerItem(Icons.person, 'Profile', () => context.go('/profile')),
+            _drawerItem(Icons.home_outlined, 'Home', () {
+              Navigator.pop(context);
+              context.go('/home');
+            }),
+            _drawerItem(Icons.folder_outlined, 'Files', () {
+              Navigator.pop(context);
+              context.go('/files');
+            }),
+            _drawerItem(Icons.devices_outlined, 'Devices', () {
+              Navigator.pop(context);
+              context.go('/devices');
+            }),
+            _drawerItem(Icons.person_outline, 'Profile', () {
+              Navigator.pop(context);
+              context.go('/profile');
+            }),
+            ListTile(
+              leading: const Icon(Icons.swap_horiz, color: EchoColors.warmGold),
+              title: const Text('Pending Transfers', style: TextStyle(color: Colors.white)),
+              trailing: activeTransfers.isNotEmpty
+                ? Badge(
+                    label: Text(activeTransfers.length.toString()),
+                    backgroundColor: EchoColors.warmGold,
+                    textColor: EchoColors.deepNavy,
+                  )
+                : null,
+              onTap: () {
+                Navigator.pop(context);
+                context.go('/files'); // Assuming files page shows transfers
+              },
+            ),
             const Divider(color: EchoColors.pewter, thickness: 0.5),
-            _drawerItem(Icons.settings, 'Settings', () => context.go('/settings')),
-            _drawerItem(Icons.history, 'Logs', () => context.go('/logs')),
+            _drawerItem(Icons.settings_outlined, 'Settings', () {
+              Navigator.pop(context);
+              context.go('/settings');
+            }),
+            _drawerItem(Icons.history, 'Logs', () {
+              Navigator.pop(context);
+              context.go('/logs');
+            }),
+            const Spacer(),
+            _drawerItem(Icons.exit_to_app, 'Exit', () => _showExitDialog(context), color: Colors.redAccent),
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
 
-  Widget _drawerItem(IconData icon, String title, VoidCallback onTap) {
+  Widget _drawerItem(IconData icon, String title, VoidCallback onTap, {Color? color}) {
     return ListTile(
-      leading: Icon(icon, color: EchoColors.warmGold),
+      leading: Icon(icon, color: color ?? EchoColors.warmGold),
       title: Text(title, style: const TextStyle(color: Colors.white)),
       onTap: onTap,
+    );
+  }
+
+  void _showExitDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: EchoColors.navySlate,
+        title: const Text('Exit echoSystem?', style: TextStyle(color: Colors.white)),
+        content: const Text('Are you sure you want to close the app?', style: TextStyle(color: EchoColors.pewter)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // In a real app, you might use SystemNavigator.pop() or similar
+            },
+            child: const Text('Exit', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
     );
   }
 }
