@@ -17,11 +17,11 @@ class GlassmorphicCard extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Colors.white.withOpacity(0.05), Colors.white.withOpacity(0.02)],
+            colors: [Colors.white.withValues(alpha: 0.05), Colors.white.withOpacity(0.02)],
           ),
           borderRadius: BorderRadius.circular(32),
-          border: Border.all(color: EchoColors.warmGold.withOpacity(0.2), width: 0.5),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10))],
+          border: Border.all(color: EchoColors.warmGold.withValues(alpha: 0.2), width: 0.5),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 10))],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

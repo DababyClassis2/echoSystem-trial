@@ -28,7 +28,6 @@ class TransferService {
   static const int MAX_RETRIES = 3;
 
   StreamController<TransferProgress>? _progressController;
-  StreamSubscription? _socketSubscription;
   Socket? _socket;
   bool _cancelled = false;
 

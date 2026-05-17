@@ -128,8 +128,8 @@ class _FilesPageState extends ConsumerState<FilesPage> {
           _filter = filter;
         });
       },
-      backgroundColor: EchoColors.chromeBlueGrey.withOpacity(0.3),
-      selectedColor: EchoColors.warmGold.withOpacity(0.3),
+      backgroundColor: EchoColors.chromeBlueGrey.withValues(alpha: 0.3),
+      selectedColor: EchoColors.warmGold.withValues(alpha: 0.3),
       labelStyle: TextStyle(
         color: _filter == filter ? EchoColors.warmGold : EchoColors.icyWhite,
       ),
@@ -236,7 +236,7 @@ class _TransferTile extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      color: Colors.white.withOpacity(0.05),
+      color: Colors.white.withValues(alpha: 0.05),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: Icon(transfer.transferDirection == TransferDirection.sending ? Icons.arrow_upward : Icons.arrow_downward, color: EchoColors.warmGold),

@@ -35,7 +35,6 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
   @override
   Widget build(BuildContext context) {
     final devicesAsync = ref.watch(discoveredDevicesFromServiceProvider);
-    final sendState = ref.watch(devicesControllerProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Devices')),
@@ -149,7 +148,7 @@ class _DeviceTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      color: Colors.white.withOpacity(0.05),
+      color: Colors.white.withValues(alpha: 0.05),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ListTile(
         leading: CircleAvatar(

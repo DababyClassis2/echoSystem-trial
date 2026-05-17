@@ -11,15 +11,15 @@ class EchoStyles {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.white.withOpacity(0.08),
-            Colors.white.withOpacity(0.02),
+            Colors.white.withValues(alpha: 0.08),
+            Colors.white.withValues(alpha: 0.02),
           ],
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: EchoColors.warmGold.withOpacity(0.2), width: 0.5),
+        border: Border.all(color: EchoColors.warmGold.withValues(alpha: 0.2), width: 0.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),

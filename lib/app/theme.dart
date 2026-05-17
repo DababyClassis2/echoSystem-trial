@@ -57,8 +57,8 @@ class EchoTheme {
         titleLarge: TextStyle(color: EchoColors.icyWhite, fontSize: 20, fontWeight: FontWeight.bold),
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: EchoColors.chromeBlueGrey.withOpacity(0.3),
-        selectedColor: EchoColors.warmGold.withOpacity(0.3),
+        backgroundColor: EchoColors.chromeBlueGrey.withValues(alpha: 0.3),
+        selectedColor: EchoColors.warmGold.withValues(alpha: 0.3),
         labelStyle: const TextStyle(color: EchoColors.icyWhite),
         side: const BorderSide(color: EchoColors.chromeBlueGrey),
       ),

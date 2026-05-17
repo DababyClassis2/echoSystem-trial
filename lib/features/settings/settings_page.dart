@@ -3,8 +3,6 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:network_info_plus/network_info_plus.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:uuid/uuid.dart';
@@ -12,7 +10,6 @@ import '../../core/providers/providers.dart';
 import '../../features/profile/profile_controller.dart';
 import '../../app/theme.dart';
 import '../../core/services/storage_service.dart';
-import '../../core/models/transfer_model.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -22,16 +19,10 @@ class SettingsPage extends ConsumerStatefulWidget {
 }
 
 class _SettingsPageState extends ConsumerState<SettingsPage> {
-  late Future<String> _localIp;
-  late Future<int> _serverPort;
-  late Future<String> _appVersion;
 
   @override
   void initState() {
     super.initState();
-    _localIp = _getLocalIp();
-    _serverPort = _getServerPort();
-    _appVersion = _getAppVersion();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         ref.read(profileProvider.notifier).load();
@@ -105,7 +96,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         children: [
           _SectionHeader('General'),
           Card(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Column(
               children: [
@@ -128,7 +119,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     storage.notificationsEnabled = value;
                     setState(() {});
                   },
-                  activeColor: EchoColors.warmGold,
+                  activeThumbColor: EchoColors.warmGold,
                 ),
               ],
             ),
@@ -136,7 +127,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           const SizedBox(height: 16),
           _SectionHeader('App Updates'),
           Card(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: ListTile(
               title: const Text('Check for Updates', style: TextStyle(color: EchoColors.icyWhite)),
@@ -147,7 +138,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           const SizedBox(height: 16),
           _SectionHeader('Advanced'),
           Card(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Column(
               children: [
@@ -229,19 +220,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
           TextButton(onPressed: () {
-            final newId = const Uuid().v4();
+            // New device ID logic here if needed
             Navigator.pop(context);
           }, child: const Text('Reset', style: TextStyle(color: Colors.orange))),
         ],
       ),
     );
-  }
-
-  void _launchUrl(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
   }
 }
 

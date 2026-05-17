@@ -40,13 +40,13 @@ class _ShellScaffoldState extends State<ShellScaffold> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                EchoColors.navySlate.withOpacity(0.95),
-                EchoColors.deepNavy.withOpacity(0.98),
+                EchoColors.navySlate.withValues(alpha: 0.95),
+                EchoColors.deepNavy.withValues(alpha: 0.98),
               ],
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.4),
+                color: Colors.black.withValues(alpha: 0.4),
                 blurRadius: 15,
                 offset: const Offset(0, -5),
               ),
@@ -89,8 +89,8 @@ class _ShellScaffoldState extends State<ShellScaffold> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              EchoColors.navySlate.withOpacity(0.97),
-              EchoColors.deepNavy.withOpacity(0.98),
+              EchoColors.navySlate.withValues(alpha: 0.97),
+              EchoColors.deepNavy.withValues(alpha: 0.98),
             ],
           ),
         ),
@@ -105,7 +105,7 @@ class _ShellScaffoldState extends State<ShellScaffold> {
                   colors: [EchoColors.chromeBlueGrey, EchoColors.navySlate],
                 ),
                 border: Border(
-                  bottom: BorderSide(color: EchoColors.warmGold.withOpacity(0.3), width: 1),
+                  bottom: BorderSide(color: EchoColors.warmGold.withValues(alpha: 0.3), width: 1),
                 ),
               ),
               child: Column(
@@ -115,7 +115,7 @@ class _ShellScaffoldState extends State<ShellScaffold> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: EchoColors.warmGold.withOpacity(0.2),
+                      color: EchoColors.warmGold.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(Icons.share, color: EchoColors.warmGold, size: 32),

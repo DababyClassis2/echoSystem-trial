@@ -67,7 +67,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         padding: const EdgeInsets.all(16),
         children: [
           Card(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -98,7 +98,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           ),
           const SizedBox(height: 16),
           Card(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -126,7 +126,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           ),
           const SizedBox(height: 16),
           Card(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -162,7 +162,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           ),
           const SizedBox(height: 16),
           Card(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: SwitchListTile(
               title: const Text('Enable Notifications', style: TextStyle(color: EchoColors.icyWhite)),
@@ -171,12 +171,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 controller.updateNotificationsEnabled(value);
                 setState(() {});
               },
-              activeColor: EchoColors.warmGold,
+              activeThumbColor: EchoColors.warmGold,
             ),
           ),
           const SizedBox(height: 16),
           Card(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
               padding: const EdgeInsets.all(16),
