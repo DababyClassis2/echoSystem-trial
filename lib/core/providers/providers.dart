@@ -195,7 +195,9 @@ final discoveryServiceWithPortProvider = FutureProvider<DiscoveryService>((ref) 
     port: port,
   );
   await discovery.start();
-  ref.onDispose(() => discovery.dispose());
+  ref.onDispose(() {
+    discovery.dispose();
+  });
   return discovery;
 });
 
@@ -205,6 +207,5 @@ final discoveryServiceProvider = Provider<DiscoveryService>((ref) {
 
 // --- Helper: watch discovered devices from the future provider ---
 final discoveredDevicesFromServiceProvider = StreamProvider<List<DeviceModel>>((ref) {
-  // Return an empty stream, stub
   return Stream<List<DeviceModel>>.empty();
 });
