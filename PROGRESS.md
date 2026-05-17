@@ -10,7 +10,7 @@
 - [x] Phase 2C – transfer_service.dart
 - [x] Phase 3A – permission_service.dart
 - [x] Phase 3B – storage_service.dart
-- [ ] Phase 3C – providers.dart (Riverpod)
+- [x] Phase 3C – providers.dart (Riverpod)
 - [ ] Phase 4A – devices_page + controller
 - [ ] Phase 4B – files_page + controller
 - [ ] Phase 4C – profile_page + controller
