@@ -99,7 +99,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       storage.notificationsEnabled = value;
                       setState(() {});
                     },
-                    activeThumbColor: EchoColors.warmGold,
+                    activeColor: EchoColors.warmGold,
                   ),
                 ),
               ],
