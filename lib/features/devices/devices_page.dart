@@ -14,11 +14,22 @@ class DevicesPage extends ConsumerStatefulWidget {
 }
 
 class _DevicesPageState extends ConsumerState<DevicesPage> {
+  bool _disposed = false;
+
   @override
   void initState() {
     super.initState();
-    // Ensure discovery service starts (the provider handles it)
-    ref.read(discoveryServiceWithPortProvider.future);
+    ref.read(discoveryServiceWithPortProvider.future).then((_) {
+      if (!_disposed && mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 
   @override
@@ -30,7 +41,6 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
       appBar: AppBar(title: const Text('Devices')),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Refresh discovery (optional)
           ref.invalidate(discoveryServiceWithPortProvider);
         },
         backgroundColor: EchoColors.warmGold,
