@@ -19,11 +19,24 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
   @override
   void initState() {
     super.initState();
+    Future.microtask(() => _startSocketServer());
     ref.read(discoveryServiceWithPortProvider.future).then((_) {
       if (!_disposed && mounted) {
         setState(() {});
       }
     });
+  }
+
+  Future<void> _startSocketServer() async {
+    try {
+      await ref.read(socketServerProvider).start();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not start receiver: $e')),
+        );
+      }
+    }
   }
 
   @override

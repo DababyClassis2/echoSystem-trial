@@ -59,11 +59,6 @@ class _InitializerScreenState extends State<InitializerScreen> {
       final permission = PermissionService();
       await permission.init().timeout(const Duration(seconds: 5));
       setState(() {
-        _status = 'Starting SocketServer...';
-      });
-      final socketServer = SocketServer();
-      await socketServer.start().timeout(const Duration(seconds: 5));
-      setState(() {
         _status = 'All services ready. Starting app...';
       });
       
@@ -71,12 +66,7 @@ class _InitializerScreenState extends State<InitializerScreen> {
       
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => ProviderScope(
-            overrides: [
-              socketServerProvider.overrideWithValue(socketServer),
-            ],
-            child: const EchoSystemApp(),
-          ),
+          builder: (context) => const EchoSystemApp(),
         ),
       );
     } catch (e, stack) {
