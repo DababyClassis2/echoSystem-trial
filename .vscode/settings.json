@@ -1,0 +1,6 @@
+{
+    "editor.mouseWheelZoom": true,
+    "terminal.integrated.mouseWheelZoom": true,
+    "files.autoSaveWorkspaceFilesOnly": true,
+    "workbench.tree.renderIndentGuides": "none"
+}
