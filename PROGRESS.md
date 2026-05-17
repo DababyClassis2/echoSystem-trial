@@ -17,4 +17,4 @@
 - [x] Phase 4D – incoming_dialog.dart
 - [x] Phase 4E – logs_page.dart
 - [x] Phase 4F – settings_page.dart
-- [x] Phase 5A – GitHub Actions (build.yml update)
+- [x] Phase 5B – Final integration
