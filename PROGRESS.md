@@ -7,7 +7,7 @@
 - [x] Phase 1C – file_item_model.dart
 - [x] Phase 2A – discovery_service.dart
 - [x] Phase 2B – socket_server.dart
-- [ ] Phase 2C – transfer_service.dart
+- [x] Phase 2C – transfer_service.dart
 - [ ] Phase 3A – permission_service.dart
 - [ ] Phase 3B – storage_service.dart
 - [ ] Phase 3C – providers.dart (Riverpod)
