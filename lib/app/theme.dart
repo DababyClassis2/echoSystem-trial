@@ -7,6 +7,17 @@ class EchoColors {
   static const Color icyWhite = Color(0xFFF5F7FA);
   static const Color warmGold = Color(0xFFD4C4A8);
   static const Color deepNavy = Color(0xFF1A252F);
+
+  static const List<int> avatarPalette = [
+    0xFF4A5B6E,
+    0xFFD4C4A8,
+    0xFF6B7B8D,
+    0xFFE74C3C,
+    0xFF2ECC71,
+    0xFF3498DB,
+    0xFFF1C40F,
+    0xFF9B59B6,
+  ];
 }
 
 final appTheme = ThemeData(
