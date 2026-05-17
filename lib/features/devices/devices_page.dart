@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/providers.dart';
 import '../../core/models/device_model.dart';
@@ -31,7 +32,6 @@ class _DevicesPageState extends ConsumerState<DevicesPage>
       parent: _radarController,
       curve: Curves.easeOut,
     );
-    // Start scan on page load
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(discoveryProvider.notifier).startScan();
     });
@@ -49,6 +49,9 @@ class _DevicesPageState extends ConsumerState<DevicesPage>
     final scanning = ref.watch(isDiscoveryActiveProvider);
     final ifacesAsync = ref.watch(activeInterfacesProvider);
 
+    final extra = GoRouterState.of(context).extra as Map<String, dynamic>?;
+    final filePaths = extra?['filePaths'] as List<String>?;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Nearby Devices'),
@@ -62,7 +65,6 @@ class _DevicesPageState extends ConsumerState<DevicesPage>
         ],
       ),
       body: Column(children: [
-        // ── Network interface chips ──────────────────────────
         ifacesAsync.when(
           data: (ifaces) => SizedBox(
             height: 50,
@@ -89,12 +91,9 @@ class _DevicesPageState extends ConsumerState<DevicesPage>
           loading: () => const SizedBox(height: 50),
           error: (_, __) => const SizedBox(height: 50),
         ),
-
-        // ── Radar animation ──────────────────────────────────
         SizedBox(
           height: 220,
           child: Stack(alignment: Alignment.center, children: [
-            // Pulse rings
             ...List.generate(3, (i) => AnimatedBuilder(
               animation: _radarAnimation,
               builder: (_, __) {
@@ -113,7 +112,6 @@ class _DevicesPageState extends ConsumerState<DevicesPage>
                 );
               },
             )),
-            // Centre dot
             Container(
               width: 14,
               height: 14,
@@ -129,7 +127,6 @@ class _DevicesPageState extends ConsumerState<DevicesPage>
                 ],
               ),
             ),
-            // Peer dots on radar
             ...peers.asMap().entries.map((e) {
               final angle = (e.key * (360 / max(peers.length, 1))) * (pi / 180);
               final radius = 60.0 + (e.key % 3) * 20;
@@ -141,8 +138,6 @@ class _DevicesPageState extends ConsumerState<DevicesPage>
             }),
           ]),
         ),
-
-        // ── Status text ──────────────────────────────────────
         Text(
           scanning
               ? 'Scanning for devices…'
@@ -152,34 +147,31 @@ class _DevicesPageState extends ConsumerState<DevicesPage>
             fontSize: 13,
           ),
         ),
-
         const SizedBox(height: 12),
-
-        // ── Peer card list ────────────────────────────────────
         Expanded(
           child: peers.isEmpty
               ? _buildEmptyState(scanning)
               : ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: peers.length,
-                  itemBuilder: (_, i) => _buildPeerCard(peers[i]),
+                  itemBuilder: (_, i) => _buildPeerCard(peers[i], filePaths),
                 ),
         ),
       ]),
     );
   }
 
-  Widget _buildPeerCard(DeviceModel peer) {
+  Widget _buildPeerCard(DeviceModel peer, List<String>? filePaths) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: PeerCardWrapper(
         peer: peer,
-        onTap: () => _showFilePicker(peer),
+        onTap: () => _showFilePicker(peer, filePaths),
       ),
     );
   }
 
-  void _showFilePicker(DeviceModel device) {
+  void _showFilePicker(DeviceModel device, List<String>? filePaths) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -211,20 +203,32 @@ class _DevicesPageState extends ConsumerState<DevicesPage>
                 onPressed: () async {
                   Navigator.pop(context);
                   final controller = ref.read(devicesControllerProvider.notifier);
-                  await controller.pickAndSendFile(
-                    device.id,
-                    device.name,
-                    device.ipAddress,
-                    device.port,
-                  );
+                  if (filePaths != null) {
+                    for (final path in filePaths) {
+                        await controller.sendFile(
+                          device.id,
+                          device.name,
+                          device.ipAddress,
+                          device.port,
+                          path
+                        );
+                    }
+                  } else {
+                      await controller.pickAndSendFile(
+                        device.id,
+                        device.name,
+                        device.ipAddress,
+                        device.port,
+                      );
+                  }
                   if (mounted && ref.read(devicesControllerProvider).hasError) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Failed to send file')),
                     );
                   }
                 },
-                icon: const Icon(Icons.attach_file),
-                label: const Text('Choose File'),
+                icon: const Icon(Icons.send_rounded),
+                label: Text(filePaths != null ? 'Confirm Send' : 'Choose File'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: EchoColors.warmGold,
                   foregroundColor: EchoColors.deepNavy,
@@ -313,7 +317,6 @@ class PeerCardWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Wrap PeerCard to handle the specific onTap logic for this page
     return GestureDetector(
       onTap: onTap,
       child: PeerCard(peer: peer),

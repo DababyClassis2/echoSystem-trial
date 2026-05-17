@@ -14,6 +14,84 @@ class DevicesController extends StateNotifier<AsyncValue<void>> {
   final Ref _ref;
   DevicesController(this._ref) : super(const AsyncValue.data(null));
 
+  Future<void> sendFile(String targetDeviceId, String targetDeviceName, String targetIp, int targetPort, String filePath) async {
+    state = const AsyncValue.loading();
+    try {
+      final fileItem = await FileItemModel.fromPath(filePath);
+      final transferId = const Uuid().v4();
+      final storage = _ref.read(storageServiceProvider);
+      final senderId = storage.deviceId;
+      final senderName = storage.deviceName;
+
+      final transfer = TransferModel(
+        id: transferId,
+        fileName: fileItem.name,
+        fileSizeBytes: fileItem.sizeBytes,
+        transferredBytes: 0,
+        status: TransferStatus.pending.name,
+        direction: TransferDirection.sending.name,
+        peerId: targetDeviceId,
+        peerName: targetDeviceName,
+        startedAt: DateTime.now(),
+      );
+      await _ref.read(transferHistoryProvider.notifier).addTransfer(transfer);
+      _ref.read(activeTransfersProvider.notifier).add(transfer);
+
+      final transferService = _ref.read(transferServiceProvider);
+      await transferService.sendFile(
+        file: fileItem,
+        target: DeviceModel(
+          id: targetDeviceId,
+          name: targetDeviceName,
+          ipAddress: targetIp,
+          port: targetPort,
+          lastSeen: DateTime.now(),
+        ),
+        transferId: transferId,
+        senderId: senderId,
+        senderName: senderName,
+        onProgress: (progress) {
+          final updatedTransfer = transfer.copyWith(
+            transferredBytes: progress.bytesTransferred,
+            status: TransferStatus.inProgress.name,
+          );
+          _ref.read(transferHistoryProvider.notifier).updateTransfer(updatedTransfer);
+          _ref.read(activeTransfersProvider.notifier).update(updatedTransfer);
+        },
+        onComplete: () {
+          final completedTransfer = transfer.copyWith(
+            transferredBytes: transfer.fileSizeBytes,
+            status: TransferStatus.completed.name,
+            completedAt: DateTime.now(),
+          );
+          _ref.read(transferHistoryProvider.notifier).updateTransfer(completedTransfer);
+          _ref.read(activeTransfersProvider.notifier).remove(transferId);
+          state = const AsyncValue.data(null);
+        },
+        onError: (error) {
+          final failedTransfer = transfer.copyWith(
+            status: TransferStatus.failed.name,
+            completedAt: DateTime.now(),
+          );
+          _ref.read(transferHistoryProvider.notifier).updateTransfer(failedTransfer);
+          _ref.read(activeTransfersProvider.notifier).remove(transferId);
+          state = AsyncValue.error(error, StackTrace.current);
+        },
+        onRejected: () {
+          final rejectedTransfer = transfer.copyWith(
+            status: TransferStatus.rejected.name,
+            completedAt: DateTime.now(),
+          );
+          _ref.read(transferHistoryProvider.notifier).updateTransfer(rejectedTransfer);
+          _ref.read(activeTransfersProvider.notifier).remove(transferId);
+          state = const AsyncValue.data(null);
+        },
+      );
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
   Future<void> pickAndSendFile(String targetDeviceId, String targetDeviceName, String targetIp, int targetPort) async {
     state = const AsyncValue.loading();
     try {
