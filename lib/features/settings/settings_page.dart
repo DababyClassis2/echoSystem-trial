@@ -1,139 +1,114 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../core/providers/providers.dart';
-import '../../features/profile/profile_controller.dart';
-import '../../app/theme.dart';
-import '../../core/services/storage_service.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import '../../core/providers/settings_provider.dart';
+import '../../core/services/settings_service.dart';
 
-class SettingsPage extends ConsumerStatefulWidget {
+class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
   @override
-  ConsumerState<SettingsPage> createState() => _SettingsPageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
 
-class _SettingsPageState extends ConsumerState<SettingsPage> {
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ref.read(profileProvider.notifier).load();
-      }
-    });
-  }
-
-  Future<void> _checkForUpdates() async {
-    try {
-      final response = await http.get(Uri.parse('https://api.github.com/repos/DababyClassis2/echoSystem-trial/releases/latest'));
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final latestTag = data['tag_name'];
-        final currentInfo = await PackageInfo.fromPlatform();
-        if (latestTag != 'v${currentInfo.version}') {
-          if (mounted) _showUpdateDialog(data['html_url']);
-        } else {
-          if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('App is up to date')));
-        }
-      }
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not check for updates')));
+    if (settings == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-  }
-
-  void _showUpdateDialog(String url) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: EchoColors.navySlate,
-        title: const Text('Update Available', style: TextStyle(color: EchoColors.icyWhite)),
-        content: const Text('A new version of echoSystem is available.', style: TextStyle(color: EchoColors.pewter)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Later')),
-          ElevatedButton(onPressed: () => launchUrl(Uri.parse(url)), child: const Text('View Release')),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final storage = ref.read(storageServiceProvider);
-    final profileController = ref.read(profileControllerProvider);
-    final profileState = ref.watch(profileProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
         children: [
-          _SectionHeader('General'),
-          Card(
-            color: Colors.white.withValues(alpha: 0.05),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: Column(
-              children: [
-                ListTile(
-                  title: const Text('Device Name', style: TextStyle(color: EchoColors.icyWhite)),
-                  subtitle: Text(profileState.deviceName, style: const TextStyle(color: EchoColors.pewter)),
-                  trailing: const Icon(Icons.edit, color: EchoColors.warmGold),
-                  onTap: () => _showEditDeviceNameDialog(context, profileController),
-                ),
-                ListTile(
-                  title: const Text('Save Location', style: TextStyle(color: EchoColors.icyWhite)),
-                  subtitle: Text(storage.defaultSavePath, style: const TextStyle(color: EchoColors.pewter, fontSize: 12)),
-                  trailing: const Icon(Icons.folder_open, color: EchoColors.warmGold),
-                  onTap: () => _showFolderPicker(context, storage),
-                ),
-                ListTile(
-                  title: const Text('Enable Notifications', style: TextStyle(color: EchoColors.icyWhite)),
-                  trailing: Switch(
-                    value: storage.notificationsEnabled,
-                    onChanged: (value) {
-                      storage.notificationsEnabled = value;
-                      setState(() {});
-                    },
-                    activeColor: EchoColors.warmGold,
-                  ),
-                ),
-              ],
+          // ── IDENTITY ────────────────────────────────
+          const _SectionHeader('Identity'),
+          _EditableTile(
+            icon: Icons.badge_rounded,
+            title: 'Device Name',
+            value: settings.deviceName,
+            onSave: (v) => ref.read(settingsProvider.notifier).setDeviceName(v),
+          ),
+
+          // ── APPEARANCE ──────────────────────────────
+          const _SectionHeader('Appearance'),
+          ListTile(
+            leading: const Icon(Icons.palette_rounded),
+            title: const Text('Theme'),
+            subtitle: Text(settings.theme.name.toUpperCase()),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _showThemePicker(context, ref, settings.theme),
+          ),
+
+          // ── TRANSFERS ───────────────────────────────
+          const _SectionHeader('Transfers'),
+          ListTile(
+            leading: const Icon(Icons.folder_rounded),
+            title: const Text('Save Location'),
+            subtitle: Text(settings.saveFolder ?? 'Default Downloads'),
+            trailing: const Icon(Icons.edit_rounded, size: 18),
+            onTap: () async {
+              final dir = await FilePicker.platform.getDirectoryPath();
+              if (dir != null) {
+                ref.read(settingsProvider.notifier).setSaveFolder(dir);
+              }
+            },
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.bolt_rounded),
+            title: const Text('Auto-accept transfers'),
+            subtitle: const Text('From known devices only'),
+            value: settings.autoAccept,
+            onChanged: (v) =>
+                ref.read(settingsProvider.notifier).setAutoAccept(v),
+          ),
+          ListTile(
+            leading: const Icon(Icons.layers_rounded),
+            title: const Text('Max concurrent transfers'),
+            trailing: DropdownButton<int>(
+              value: settings.maxConcurrent,
+              underline: const SizedBox(),
+              items: [1, 2, 3, 5, 10]
+                  .map((v) => DropdownMenuItem(value: v, child: Text('$v')))
+                  .toList(),
+              onChanged: (v) =>
+                  ref.read(settingsProvider.notifier).setMaxConcurrent(v!),
             ),
           ),
-          const SizedBox(height: 16),
-          _SectionHeader('App Updates'),
-          Card(
-            color: Colors.white.withValues(alpha: 0.05),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: ListTile(
-              title: const Text('Check for Updates', style: TextStyle(color: EchoColors.icyWhite)),
-              trailing: const Icon(Icons.update, color: EchoColors.warmGold),
-              onTap: _checkForUpdates,
+
+          // ── NETWORK ─────────────────────────────────
+          const _SectionHeader('Network'),
+          ListTile(
+            leading: const Icon(Icons.hub_rounded),
+            title: const Text('Discovery Mode'),
+            subtitle: const Text(
+                'Auto detects WiFi, hotspot, PdaNet, VPN interfaces'),
+            trailing: DropdownButton<String>(
+              value: settings.networkMode,
+              underline: const SizedBox(),
+              items: [
+                const DropdownMenuItem(value: 'auto', child: Text('Auto')),
+                const DropdownMenuItem(value: 'wifi', child: Text('WiFi Only')),
+                const DropdownMenuItem(value: 'hotspot', child: Text('Hotspot Only')),
+                const DropdownMenuItem(value: 'any', child: Text('Any Interface')),
+              ],
+              onChanged: (v) =>
+                  ref.read(settingsProvider.notifier).setNetworkMode(v!),
             ),
           ),
-          const SizedBox(height: 16),
-          _SectionHeader('Advanced'),
-          Card(
-            color: Colors.white.withValues(alpha: 0.05),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: Column(
-              children: [
-                ListTile(
-                  title: const Text('Clear Transfer History', style: TextStyle(color: EchoColors.icyWhite)),
-                  trailing: const Icon(Icons.delete_sweep, color: Colors.redAccent),
-                  onTap: () => _showClearHistoryDialog(context),
-                ),
-                ListTile(
-                  title: const Text('Reset Device ID', style: TextStyle(color: EchoColors.icyWhite)),
-                  trailing: const Icon(Icons.refresh, color: Colors.orange),
-                  onTap: () => _showResetDeviceIdDialog(context, storage),
-                ),
-              ],
+
+          // ── ABOUT ───────────────────────────────────
+          const _SectionHeader('About'),
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: const Text('Version'),
+            trailing: FutureBuilder<PackageInfo>(
+              future: PackageInfo.fromPlatform(),
+              builder: (_, snap) => Text(
+                snap.hasData
+                    ? 'v${snap.data!.version}+${snap.data!.buildNumber}'
+                    : '—',
+                style: const TextStyle(color: Colors.white54),
+              ),
             ),
           ),
         ],
@@ -141,84 +116,88 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     );
   }
 
-  void _showEditDeviceNameDialog(BuildContext context, ProfileController controller) {
-    final controllerText = TextEditingController(text: controller.deviceName);
-    showDialog(
+  void _showThemePicker(
+      BuildContext context, WidgetRef ref, AppThemeMode current) {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: EchoColors.navySlate,
-        title: const Text('Edit Device Name', style: TextStyle(color: EchoColors.icyWhite)),
-        content: TextField(
-          controller: controllerText,
-          style: const TextStyle(color: EchoColors.icyWhite),
-          decoration: const InputDecoration(hintText: 'Enter device name', hintStyle: TextStyle(color: EchoColors.pewter)),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Choose Theme',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            ...AppThemeMode.values.map((t) => RadioListTile<AppThemeMode>(
+                  title: Text(_themeLabel(t)),
+                  subtitle: Text(_themeDesc(t)),
+                  value: t,
+                  groupValue: current,
+                  onChanged: (v) {
+                    ref.read(settingsProvider.notifier).setTheme(v!);
+                    Navigator.pop(context);
+                  },
+                )),
+          ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          TextButton(onPressed: () {
-            if (controllerText.text.trim().isNotEmpty) {
-              controller.updateDeviceName(controllerText.text);
-              setState(() {});
-            }
-            Navigator.pop(context);
-          }, child: const Text('Save')),
-        ],
       ),
     );
   }
 
-  void _showFolderPicker(BuildContext context, StorageService storage) async {
-    final result = await FilePicker.platform.getDirectoryPath();
-    if (result != null && mounted) {
-      storage.defaultSavePath = result;
-      setState(() {});
-    }
-  }
+  String _themeLabel(AppThemeMode t) => switch (t) {
+        AppThemeMode.light => '☀️  Light',
+        AppThemeMode.dark => '🌙  Dark',
+        AppThemeMode.amoled => '⬛  AMOLED Black',
+        AppThemeMode.system => '🔄  Follow System',
+      };
 
-  void _showClearHistoryDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: EchoColors.navySlate,
-        title: const Text('Clear Transfer History?', style: TextStyle(color: EchoColors.icyWhite)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          TextButton(onPressed: () {
-            ref.read(transferHistoryProvider.notifier).clearAll();
-            Navigator.pop(context);
-          }, child: const Text('Clear', style: TextStyle(color: Colors.redAccent))),
-        ],
-      ),
-    );
-  }
-
-  void _showResetDeviceIdDialog(BuildContext context, StorageService storage) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: EchoColors.navySlate,
-        title: const Text('Reset Device ID?', style: TextStyle(color: EchoColors.icyWhite)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          TextButton(onPressed: () {
-            // New device ID logic here if needed
-            Navigator.pop(context);
-          }, child: const Text('Reset', style: TextStyle(color: Colors.orange))),
-        ],
-      ),
-    );
-  }
+  String _themeDesc(AppThemeMode t) => switch (t) {
+        AppThemeMode.amoled => 'Pure black — saves battery on OLED screens',
+        AppThemeMode.system => 'Matches your device theme',
+        _ => '',
+      };
 }
 
 class _SectionHeader extends StatelessWidget {
   final String title;
   const _SectionHeader(this.title);
-
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Text(title, style: const TextStyle(color: EchoColors.warmGold, fontSize: 18, fontWeight: FontWeight.bold)),
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+      child: Text(title,
+          style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold)),
+    );
+  }
+}
+
+class _EditableTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+  final ValueChanged<String> onSave;
+  const _EditableTile({required this.icon, required this.title, required this.value, required this.onSave});
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      subtitle: Text(value),
+      trailing: const Icon(Icons.edit_rounded, size: 18),
+      onTap: () {
+        final controller = TextEditingController(text: value);
+        showDialog(context: context, builder: (_) => AlertDialog(
+          title: Text(title),
+          content: TextField(controller: controller, autofocus: true),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+            TextButton(onPressed: () { onSave(controller.text); Navigator.pop(context); }, child: const Text('Save')),
+          ],
+        ));
+      },
     );
   }
 }
