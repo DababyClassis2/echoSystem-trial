@@ -7,8 +7,13 @@ import 'app/theme.dart';
 import 'core/services/storage_service.dart';
 import 'core/services/permission_service.dart';
 
+import 'core/services/background_service.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initBackgroundService();
+  await FlutterBackgroundService().startService();
   runApp(const ProviderScope(child: InitializerApp()));
 }
 

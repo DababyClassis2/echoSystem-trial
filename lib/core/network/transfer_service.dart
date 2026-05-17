@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import '../models/device_model.dart';
 import '../models/file_item_model.dart';
 
@@ -30,6 +31,13 @@ class TransferService {
   StreamController<TransferProgress>? _progressController;
   Socket? _socket;
   bool _cancelled = false;
+
+  String _fmtSpeed(double bps) {
+    if (bps <= 0) return '—';
+    if (bps < 1024) return '${bps.toStringAsFixed(0)}B/s';
+    if (bps < 1024 * 1024) return '${(bps / 1024).toStringAsFixed(1)}KB/s';
+    return '${(bps / (1024 * 1024)).toStringAsFixed(1)}MB/s';
+  }
 
   Future<void> sendFile({
     required FileItemModel file,
@@ -128,12 +136,27 @@ class TransferService {
       sent += chunk.length;
       final elapsedSeconds = stopwatch.elapsedMilliseconds / 1000;
       final bytesPerSecond = elapsedSeconds > 0 ? sent / elapsedSeconds : 0;
-      _progressController?.add(TransferProgress(sent, file.sizeBytes, bytesPerSecond.toDouble()));
+      final progress = TransferProgress(sent, file.sizeBytes, bytesPerSecond.toDouble());
+      _progressController?.add(progress);
+
+      // Invoke background service
+      FlutterBackgroundService().invoke('transfer_progress', {
+        'id': transferId,
+        'fileName': file.name,
+        'progress': progress.fraction,
+        'speed': _fmtSpeed(bytesPerSecond),
+      });
     }
     stopwatch.stop();
     fileHandle.closeSync();
     await _socket!.close();
     _progressController?.close();
+
+    // Invoke complete
+    FlutterBackgroundService().invoke('transfer_complete', {
+      'id': transferId,
+      'fileName': file.name,
+    });
   }
 
   void cancel() {

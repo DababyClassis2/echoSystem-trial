@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter_background_service/flutter_background_service.dart';
 
 class IncomingTransferHeader {
   final String transferId;
@@ -53,8 +54,6 @@ class SocketServer {
 
   void _handleConnection(Socket socket) {
     socket.listen((data) {
-      // Simple implementation: assume first message is JSON header terminated by newline
-      // For production, you'd need a more robust delimiter.
       String message = utf8.decode(data);
       if (message.contains('\n')) {
         final parts = message.split('\n');
@@ -64,6 +63,14 @@ class SocketServer {
           final header = IncomingTransferHeader.fromJson(json);
           _pendingTransfers[header.transferId] = _PendingTransfer(socket: socket, header: header);
           _headerController.add(header);
+
+          // Notify background service
+          FlutterBackgroundService().invoke('incoming_request', {
+            'id': header.transferId,
+            'fileName': header.fileName,
+            'peerName': header.senderName,
+            'fileSize': '${(header.fileSizeBytes / 1024 / 1024).toStringAsFixed(1)}MB',
+          });
         } catch (e) {
           socket.close();
         }
