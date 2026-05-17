@@ -17,7 +17,7 @@ class GlassmorphicCard extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Colors.white.withValues(alpha: 0.05), Colors.white.withOpacity(0.02)],
+            colors: [Colors.white.withValues(alpha: 0.05), Colors.white.withValues(alpha: 0.02)],
           ),
           borderRadius: BorderRadius.circular(32),
           border: Border.all(color: EchoColors.warmGold.withValues(alpha: 0.2), width: 0.5),

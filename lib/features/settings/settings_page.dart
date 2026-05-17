@@ -3,10 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:network_info_plus/network_info_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:uuid/uuid.dart';
 import '../../core/providers/providers.dart';
 import '../../features/profile/profile_controller.dart';
 import '../../app/theme.dart';
@@ -29,26 +27,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ref.read(profileProvider.notifier).load();
       }
     });
-  }
-
-  Future<String> _getLocalIp() async {
-    final info = NetworkInfo();
-    final ip = await info.getWifiIP();
-    return ip ?? 'Not connected';
-  }
-
-  Future<int> _getServerPort() async {
-    final server = ref.read(socketServerProvider);
-    try {
-      return await server.start();
-    } catch (e) {
-      return 0;
-    }
-  }
-
-  Future<String> _getAppVersion() async {
-    final info = await PackageInfo.fromPlatform();
-    return '${info.version} (${info.buildNumber})';
   }
 
   Future<void> _checkForUpdates() async {
@@ -121,7 +99,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       storage.notificationsEnabled = value;
                       setState(() {});
                     },
-                    activeColor: EchoColors.warmGold,
+                    activeThumbColor: EchoColors.warmGold,
                   ),
                 ),
               ],

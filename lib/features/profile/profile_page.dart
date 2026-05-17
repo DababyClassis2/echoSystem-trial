@@ -164,14 +164,16 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           Card(
             color: Colors.white.withValues(alpha: 0.05),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: SwitchListTile(
+            child: ListTile(
               title: const Text('Enable Notifications', style: TextStyle(color: EchoColors.icyWhite)),
-              value: controller.notificationsEnabled,
-              onChanged: (value) {
-                controller.updateNotificationsEnabled(value);
-                setState(() {});
-              },
-              activeColor: EchoColors.warmGold,
+              trailing: Switch(
+                value: controller.notificationsEnabled,
+                onChanged: (value) {
+                  controller.updateNotificationsEnabled(value);
+                  setState(() {});
+                },
+                activeThumbColor: EchoColors.warmGold,
+              ),
             ),
           ),
           const SizedBox(height: 16),

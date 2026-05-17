@@ -6,8 +6,6 @@ import 'app/router.dart';
 import 'app/theme.dart';
 import 'core/services/storage_service.dart';
 import 'core/services/permission_service.dart';
-import 'core/network/socket_server.dart';
-import 'core/providers/providers.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
