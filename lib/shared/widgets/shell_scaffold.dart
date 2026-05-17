@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../app/theme.dart';
@@ -15,6 +16,7 @@ class ShellScaffold extends ConsumerStatefulWidget {
 class _ShellScaffoldState extends ConsumerState<ShellScaffold> {
   final PageController _pageController = PageController();
   static const _tabs = ['/home', '/files', '/devices', '/profile'];
+  DateTime? _lastBackPress;
 
   @override
   void dispose() {
@@ -24,50 +26,82 @@ class _ShellScaffoldState extends ConsumerState<ShellScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: const Text('echoSystem'),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-      ),
-      drawer: _buildDrawer(context, ref),
-      body: PageView(
-        controller: _pageController,
-        physics: const BouncingScrollPhysics(),
-        onPageChanged: (i) => context.go(_tabs[i]),
-        children: [widget.child],
-      ),
-      bottomNavigationBar: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                EchoColors.navySlate.withValues(alpha: 0.95),
-                EchoColors.deepNavy.withValues(alpha: 0.98),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+
+        // If not on the home tab, go to home tab first
+        final location = GoRouterState.of(context).uri.toString();
+        if (location != '/home') {
+          _pageController.jumpToPage(0);
+          context.go('/home');
+          return;
+        }
+
+        // On home tab — double-back to exit
+        final now = DateTime.now();
+        if (_lastBackPress == null ||
+            now.difference(_lastBackPress!) > const Duration(seconds: 2)) {
+          _lastBackPress = now;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Press back again to exit'),
+              duration: Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          return;
+        }
+
+        // Second press within 2 seconds — exit
+        SystemNavigator.pop();
+      },
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          title: const Text('echoSystem'),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+        ),
+        drawer: _buildDrawer(context, ref),
+        body: PageView(
+          controller: _pageController,
+          physics: const BouncingScrollPhysics(),
+          onPageChanged: (i) => context.go(_tabs[i]),
+          children: [widget.child],
+        ),
+        bottomNavigationBar: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  EchoColors.navySlate.withValues(alpha: 0.95),
+                  EchoColors.deepNavy.withValues(alpha: 0.98),
+                ],
+              ),
+            ),
+            child: BottomNavigationBar(
+              currentIndex: _locationIndex(context),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              selectedItemColor: EchoColors.warmGold,
+              unselectedItemColor: EchoColors.pewter,
+              type: BottomNavigationBarType.fixed,
+              onTap: (i) {
+                _pageController.animateToPage(i, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+                context.go(_tabs[i]);
+              },
+              items: const [
+                BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
+                BottomNavigationBarItem(icon: Icon(Icons.folder_outlined), label: 'Files'),
+                BottomNavigationBarItem(icon: Icon(Icons.devices_outlined), label: 'Devices'),
+                BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
               ],
             ),
-          ),
-          child: BottomNavigationBar(
-            currentIndex: _locationIndex(context),
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            selectedItemColor: EchoColors.warmGold,
-            unselectedItemColor: EchoColors.pewter,
-            type: BottomNavigationBarType.fixed,
-            onTap: (i) {
-              _pageController.animateToPage(i, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-              context.go(_tabs[i]);
-            },
-            items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
-              BottomNavigationBarItem(icon: Icon(Icons.folder_outlined), label: 'Files'),
-              BottomNavigationBarItem(icon: Icon(Icons.devices_outlined), label: 'Devices'),
-              BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
-            ],
           ),
         ),
       ),

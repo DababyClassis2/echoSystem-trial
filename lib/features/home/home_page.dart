@@ -12,8 +12,8 @@ class HomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final history = ref.watch(transferHistoryProvider);
-    final completed = history.where((t) => t.status == TransferStatus.completed).length;
-    final failed = history.where((t) => t.status == TransferStatus.failed).length;
+    final completed = history.where((t) => t.transferStatus == TransferStatus.completed).length;
+    final failed = history.where((t) => t.transferStatus == TransferStatus.failed).length;
     final total = history.length;
 
     return RefreshIndicator(
@@ -170,7 +170,7 @@ class _RecentTransferTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isCompleted = transfer.status == TransferStatus.completed;
+    final bool isCompleted = transfer.transferStatus == TransferStatus.completed;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       color: Colors.white.withValues(alpha: 0.05),
@@ -187,18 +187,23 @@ class _RecentTransferTile extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Text(
-          '${transfer.peerName} • ${transfer.status.name}',
+          '${transfer.peerName} • ${transfer.status}',
           style: const TextStyle(color: EchoColors.pewter, fontSize: 12),
         ),
         trailing: Text(
-          _formatTime(transfer.timestamp),
+          _formatTime(transfer.startedAt),
           style: const TextStyle(color: EchoColors.pewter, fontSize: 10),
         ),
       ),
     );
   }
 
-  String _formatTime(DateTime dt) {
-    return '${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
+  String _formatTime(DateTime? dt) {
+    if (dt == null) return '—';
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
+    if (diff.inDays < 1) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
   }
 }
