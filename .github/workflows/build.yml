@@ -1,4 +1,5 @@
 name: Build LocalShare APK
+
 on:
   push:
     branches: [ main ]
@@ -9,21 +10,33 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup Java
         uses: actions/setup-java@v4
-        with: { distribution: 'zulu', java-version: '17' }
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
-        with: { flutter-version: '3.27.4', channel: 'stable' }
-      - name: Prepare environment
+        with:
+          flutter-version: '3.27.4'
+          channel: 'stable'
+
+      - name: Regenerate Android project
         run: |
-          echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
-          mkdir -p assets && touch assets/.gitkeep
+          rm -rf android
+          flutter create --platforms=android .
+
       - name: Build APK
         run: |
           flutter pub get
           flutter build apk --release
+
       - uses: actions/upload-artifact@v4
-        with: { name: 'apk', path: 'build/app/outputs/flutter-apk/app-release.apk' }
+        with:
+          name: apk
+          path: build/app/outputs/flutter-apk/app-release.apk
