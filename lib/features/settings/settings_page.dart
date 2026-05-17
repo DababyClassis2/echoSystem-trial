@@ -113,14 +113,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   trailing: const Icon(Icons.folder_open, color: EchoColors.warmGold),
                   onTap: () => _showFolderPicker(context, storage),
                 ),
-                SwitchListTile(
+                ListTile(
                   title: const Text('Enable Notifications', style: TextStyle(color: EchoColors.icyWhite)),
-                  value: storage.notificationsEnabled,
-                  onChanged: (value) {
-                    storage.notificationsEnabled = value;
-                    setState(() {});
-                  },
-                  activeThumbColor: EchoColors.warmGold,
+                  trailing: Switch(
+                    value: storage.notificationsEnabled,
+                    onChanged: (value) {
+                      storage.notificationsEnabled = value;
+                      setState(() {});
+                    },
+                    activeColor: EchoColors.warmGold,
+                  ),
                 ),
               ],
             ),

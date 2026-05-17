@@ -10,7 +10,7 @@ class EchoSystemApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'echoSystem',
       theme: EchoTheme.build(),
-      routerConfig: appRouter,
+2      routerConfig: appRouter,
       debugShowCheckedModeBanner: false,
     );
   }
