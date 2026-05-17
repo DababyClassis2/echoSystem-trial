@@ -11,6 +11,6 @@ class EchoSystemApp extends StatelessWidget {
       title: 'echoSystem',
       theme: EchoTheme.build(),
       home: const SizedBox.shrink(), // temporary placeholder
-    );
+  );
   }
 }

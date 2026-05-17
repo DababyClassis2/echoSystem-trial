@@ -45,7 +45,7 @@ class SocketServer {
   Stream<IncomingTransferHeader> get onIncomingTransfer => _headerController.stream;
 
   Future<int> start() async {
-    _serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, 0);
+    _serverSocket = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
     _serverSocket!.listen(_handleConnection);
     return _serverSocket!.port;
   }
