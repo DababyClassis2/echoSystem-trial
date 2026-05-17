@@ -1,70 +1,137 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import 'app/router.dart';
 import 'app/theme.dart';
+import 'core/services/storage_service.dart';
+import 'core/services/permission_service.dart';
+import 'core/network/socket_server.dart';
+import 'core/providers/providers.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Capture errors and show them on screen
-  final errorNotifier = ValueNotifier<String?>(null);
-  FlutterError.onError = (details) {
-    errorNotifier.value = details.exceptionAsString();
-    print(details.exceptionAsString());
-  };
-  PlatformDispatcher.instance.onError = (error, stack) {
-    errorNotifier.value = error.toString();
-    return true;
-  };
-
-  runApp(
-    ProviderScope(
-      child: ErrorBoundary(
-        errorNotifier: errorNotifier,
-        child: const EchoSystemApp(),
-      ),
-    ),
-  );
+  // Run the app with a custom error catcher
+  runApp(const ProviderScope(child: InitializerApp()));
 }
 
-class ErrorBoundary extends StatelessWidget {
-  final ValueNotifier<String?> errorNotifier;
-  final Widget child;
-
-  const ErrorBoundary({super.key, required this.errorNotifier, required this.child});
+class InitializerApp extends StatelessWidget {
+  const InitializerApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<String?>(
-      valueListenable: errorNotifier,
-      builder: (context, error, _) {
-        if (error != null) {
-          return MaterialApp(
-            home: Scaffold(
-              backgroundColor: Colors.red.shade900,
-              body: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error, size: 64, color: Colors.white),
-                      const SizedBox(height: 16),
-                      Text(
-                        'App Error:\n$error',
-                        style: const TextStyle(color: Colors.white, fontSize: 14),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+    return MaterialApp(
+      title: 'echoSystem',
+      theme: EchoTheme.build(),
+      home: const InitializerScreen(),
+      debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+class InitializerScreen extends StatefulWidget {
+  const InitializerScreen({super.key});
+
+  @override
+  State<InitializerScreen> createState() => _InitializerScreenState();
+}
+
+class _InitializerScreenState extends State<InitializerScreen> {
+  String _status = 'Initializing...';
+  String _error = '';
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    try {
+      setState(() {
+        _status = 'Starting StorageService...';
+      });
+      final storage = StorageService();
+      await storage.init().timeout(const Duration(seconds: 10));
+      setState(() {
+        _status = 'Starting PermissionService...';
+      });
+      final permission = PermissionService();
+      await permission.init().timeout(const Duration(seconds: 5));
+      setState(() {
+        _status = 'Starting SocketServer...';
+      });
+      final socketServer = SocketServer();
+      await socketServer.start().timeout(const Duration(seconds: 5));
+      setState(() {
+        _status = 'All services ready. Starting app...';
+      });
+      
+      if (!mounted) return;
+      
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => ProviderScope(
+            overrides: [
+              socketServerProvider.overrideWithValue(socketServer),
+            ],
+            child: const EchoSystemApp(),
+          ),
+        ),
+      );
+    } catch (e, stack) {
+      // Write error to file
+      try {
+        final dir = await getExternalStorageDirectory();
+        final logFile = File('${dir?.path}/echoSystem_crash.log');
+        await logFile.writeAsString('$e\n$stack');
+        _error = 'Error: $e\nLog saved to ${logFile.path}';
+      } catch (logError) {
+        _error = 'Error: $e\n(Also failed to write log: $logError)';
+      }
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: _isLoading
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 20),
+                  Text(_status),
+                ],
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error, color: Colors.red, size: 64),
+                  const SizedBox(height: 20),
+                  Text(_error, textAlign: TextAlign.center),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _isLoading = true;
+                        _error = '';
+                        _status = 'Retrying...';
+                      });
+                      _initialize();
+                    },
+                    child: const Text('Retry'),
                   ),
-                ),
+                ],
               ),
-            ),
-          );
-        }
-        return child;
-      },
+      ),
     );
   }
 }
@@ -78,7 +145,7 @@ class EchoSystemApp extends StatelessWidget {
       title: 'echoSystem',
       theme: EchoTheme.build(),
       routerConfig: appRouter,
-      debugShowCheckedModeBanner: true,
+      debugShowCheckedModeBanner: false,
     );
   }
 }
