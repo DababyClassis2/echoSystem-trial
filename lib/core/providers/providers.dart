@@ -204,6 +204,7 @@ final discoveryServiceProvider = Provider<DiscoveryService>((ref) {
 });
 
 // --- Helper: watch discovered devices from the future provider ---
-final discoveredDevicesStreamProvider = StreamProvider<List<DeviceModel>>((ref) {
-  return const Stream.empty();
+final discoveredDevicesFromServiceProvider = StreamProvider<List<DeviceModel>>((ref) {
+  // Return an empty stream, stub
+  return Stream<List<DeviceModel>>.empty();
 });
