@@ -116,7 +116,7 @@ class _ShellScaffoldState extends ConsumerState<ShellScaffold> {
 
   Widget _buildDrawer(BuildContext context, WidgetRef ref) {
     final profileState = ref.watch(profileProvider);
-    final activeTransfers = ref.watch(activeTransfersProvider);
+    final avatarColor = Color(profileState.avatarColor);
     
     return Drawer(
       child: Container(
@@ -130,79 +130,138 @@ class _ShellScaffoldState extends ConsumerState<ShellScaffold> {
             ],
           ),
         ),
-        child: ListView(
-          padding: EdgeInsets.zero,
+        child: Column(
           children: [
-            UserAccountsDrawerHeader(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [EchoColors.chromeBlueGrey, EchoColors.navySlate],
-                ),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  UserAccountsDrawerHeader(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          avatarColor.withValues(alpha: 0.8),
+                          avatarColor.withValues(alpha: 0.4),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    currentAccountPicture: GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                        context.push('/profile');
+                      },
+                      child: CircleAvatar(
+                        backgroundColor: avatarColor,
+                        child: Text(
+                          profileState.deviceName.isNotEmpty
+                            ? profileState.deviceName[0].toUpperCase()
+                            : '?',
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    accountName: Text(
+                      profileState.deviceName,
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                    accountEmail: const Text('Tap avatar to edit profile', style: TextStyle(color: EchoColors.pewter)),
+                    onDetailsPressed: () {
+                      Navigator.pop(context);
+                      context.push('/profile');
+                    },
+                  ),
+                  _drawerItem(Icons.home_outlined, 'Home', () {
+                    Navigator.pop(context);
+                    context.go('/home');
+                  }),
+                  _drawerItem(Icons.folder_outlined, 'Files', () {
+                    Navigator.pop(context);
+                    context.go('/files');
+                  }),
+                  _drawerItem(Icons.devices_outlined, 'Devices', () {
+                    Navigator.pop(context);
+                    context.go('/devices');
+                  }),
+                  _drawerItem(Icons.person_outline, 'Profile', () {
+                    Navigator.pop(context);
+                    context.go('/profile');
+                  }),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final pending = ref.watch(activeTransfersProvider).length;
+                      return ListTile(
+                        leading: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            const Icon(Icons.swap_horiz_rounded, color: EchoColors.warmGold),
+                            if (pending > 0)
+                              Positioned(
+                                right: -6, top: -6,
+                                child: Container(
+                                  padding: const EdgeInsets.all(3),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.redAccent,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    '$pending',
+                                    style: const TextStyle(fontSize: 10, color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        title: const Text('Pending Transfers', style: TextStyle(color: Colors.white)),
+                        onTap: () {
+                          Navigator.pop(context);
+                          context.go('/files'); // Fixed to /files as /transfers doesn't exist
+                        },
+                      );
+                    },
+                  ),
+                  const Divider(color: EchoColors.pewter, thickness: 0.5),
+                  _drawerItem(Icons.settings_outlined, 'Settings', () {
+                    Navigator.pop(context);
+                    context.push('/settings');
+                  }),
+                  _drawerItem(Icons.history, 'Logs', () {
+                    Navigator.pop(context);
+                    context.push('/logs');
+                  }),
+                ],
               ),
-              currentAccountPicture: CircleAvatar(
-                backgroundColor: Color(profileState.avatarColor),
-                child: Text(
-                  profileState.deviceName.isNotEmpty ? profileState.deviceName[0].toUpperCase() : 'E',
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-              ),
-              accountName: Text(
-                profileState.deviceName,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-              accountEmail: const Text(
-                'Tap to edit profile',
-                style: TextStyle(color: EchoColors.pewter),
-              ),
-              onDetailsPressed: () {
-                Navigator.pop(context);
-                context.go('/profile');
-              },
-            ),
-            _drawerItem(Icons.home_outlined, 'Home', () {
-              Navigator.pop(context);
-              context.go('/home');
-            }),
-            _drawerItem(Icons.folder_outlined, 'Files', () {
-              Navigator.pop(context);
-              context.go('/files');
-            }),
-            _drawerItem(Icons.devices_outlined, 'Devices', () {
-              Navigator.pop(context);
-              context.go('/devices');
-            }),
-            _drawerItem(Icons.person_outline, 'Profile', () {
-              Navigator.pop(context);
-              context.go('/profile');
-            }),
-            ListTile(
-              leading: const Icon(Icons.swap_horiz, color: EchoColors.warmGold),
-              title: const Text('Pending Transfers', style: TextStyle(color: Colors.white)),
-              trailing: activeTransfers.isNotEmpty
-                ? Badge(
-                    label: Text(activeTransfers.length.toString()),
-                    backgroundColor: EchoColors.warmGold,
-                    textColor: EchoColors.deepNavy,
-                  )
-                : null,
-              onTap: () {
-                Navigator.pop(context);
-                context.go('/files'); // Assuming files page shows transfers
-              },
             ),
             const Divider(color: EchoColors.pewter, thickness: 0.5),
-            _drawerItem(Icons.settings_outlined, 'Settings', () {
-              Navigator.pop(context);
-              context.go('/settings');
-            }),
-            _drawerItem(Icons.history, 'Logs', () {
-              Navigator.pop(context);
-              context.go('/logs');
-            }),
-            const Spacer(),
-            _drawerItem(Icons.exit_to_app, 'Exit', () => _showExitDialog(context), color: Colors.redAccent),
+            ListTile(
+              leading: const Icon(Icons.exit_to_app, color: Colors.redAccent),
+              title: const Text('Exit', style: TextStyle(color: Colors.redAccent)),
+              onTap: () async {
+                Navigator.pop(context); // close drawer first
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    backgroundColor: EchoColors.navySlate,
+                    title: const Text('Exit echoSystem?', style: TextStyle(color: Colors.white)),
+                    content: const Text('All active transfers will be cancelled.', style: TextStyle(color: EchoColors.pewter)),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+                        child: const Text('Exit'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirm == true) SystemNavigator.pop();
+              },
+            ),
             const SizedBox(height: 20),
           ],
         ),
@@ -215,30 +274,6 @@ class _ShellScaffoldState extends ConsumerState<ShellScaffold> {
       leading: Icon(icon, color: color ?? EchoColors.warmGold),
       title: Text(title, style: const TextStyle(color: Colors.white)),
       onTap: onTap,
-    );
-  }
-
-  void _showExitDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: EchoColors.navySlate,
-        title: const Text('Exit echoSystem?', style: TextStyle(color: Colors.white)),
-        content: const Text('Are you sure you want to close the app?', style: TextStyle(color: EchoColors.pewter)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // In a real app, you might use SystemNavigator.pop() or similar
-            },
-            child: const Text('Exit', style: TextStyle(color: Colors.redAccent)),
-          ),
-        ],
-      ),
     );
   }
 }
