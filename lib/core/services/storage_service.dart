@@ -42,8 +42,7 @@ class StorageService {
   String get deviceName {
     final name = _prefs.getString('deviceName');
     if (name != null) return name;
-    // Default: device model name
-    return _getDefaultDeviceName();
+    return 'EchoDevice';
   }
 
   set deviceName(String name) {
