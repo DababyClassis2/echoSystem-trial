@@ -7,11 +7,10 @@ class EchoSystemApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
+    return MaterialApp(
       title: 'echoSystem',
       theme: EchoTheme.build(),
-2      routerConfig: appRouter,
-      debugShowCheckedModeBanner: false,
+      home: const SizedBox.shrink(), // temporary placeholder
     );
   }
 }
