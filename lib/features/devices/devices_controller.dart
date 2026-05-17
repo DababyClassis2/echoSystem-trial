@@ -3,10 +3,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/models/file_item_model.dart';
 import '../../core/models/transfer_model.dart';
-import '../../core/network/transfer_service.dart';
 import '../../core/providers/providers.dart';
 import '../../core/models/device_model.dart';
-import '../../core/models/transfer_model.dart';
 
 final devicesControllerProvider = StateNotifierProvider<DevicesController, AsyncValue<void>>((ref) {
   return DevicesController(ref);

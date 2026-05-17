@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:nsd/nsd.dart';
 import '../models/device_model.dart';
 
 class DiscoveryService {
