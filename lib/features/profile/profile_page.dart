@@ -26,9 +26,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     _ipAddress = _getIpAddress();
     _deviceModel = _getDeviceModel();
     _appVersion = _getAppVersion();
-    // Ensure profile is loaded
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(profileProvider.notifier).load();
+      if (mounted) {
+        ref.read(profileProvider.notifier).load();
+      }
     });
   }
 
@@ -65,7 +66,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Avatar color picker
           Card(
             color: Colors.white.withOpacity(0.05),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -97,8 +97,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Device name
           Card(
             color: Colors.white.withOpacity(0.05),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -127,8 +125,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Storage path
           Card(
             color: Colors.white.withOpacity(0.05),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -152,7 +148,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         icon: const Icon(Icons.folder_open, color: EchoColors.warmGold),
                         onPressed: () async {
                           final result = await FilePicker.platform.getDirectoryPath();
-                          if (result != null) {
+                          if (result != null && mounted) {
                             controller.updateStoragePath(result);
                             setState(() {});
                           }
@@ -165,8 +161,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Notifications toggle
           Card(
             color: Colors.white.withOpacity(0.05),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -181,8 +175,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Device info
           Card(
             color: Colors.white.withOpacity(0.05),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
