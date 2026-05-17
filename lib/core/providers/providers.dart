@@ -205,6 +205,5 @@ final discoveryServiceProvider = Provider<DiscoveryService>((ref) {
 
 // --- Helper: watch discovered devices from the future provider ---
 final discoveredDevicesStreamProvider = StreamProvider<List<DeviceModel>>((ref) {
-  final discoveryAsync = ref.watch(discoveryServiceWithPortProvider);
-  return discoveryAsync.whenData((discovery) => discovery.devices).asStream().flatten;
+  return const Stream.empty();
 });
