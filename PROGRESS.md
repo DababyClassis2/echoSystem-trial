@@ -15,6 +15,6 @@
 - [x] Phase 4B – files_page + controller
 - [x] Phase 4C – profile_page + controller
 - [x] Phase 4D – incoming_dialog.dart
-- [ ] Phase 4E – logs_page.dart
+- [x] Phase 4E – logs_page.dart
 - [ ] Phase 4F – settings_page.dart
 - [x] Phase 5A – GitHub Actions (build.yml update)
