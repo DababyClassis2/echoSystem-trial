@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/models/transfer_model.dart';
 import '../../core/providers/providers.dart';
 import '../../app/theme.dart';
@@ -23,6 +24,17 @@ class _FilesPageState extends ConsumerState<FilesPage> {
         ref.read(transferHistoryProvider.notifier).loadFromStorage();
       }
     });
+  }
+
+  ({Color color, IconData icon, String label}) _statusMeta(String status) {
+    return switch (status.toLowerCase()) {
+      'completed'  => (color: Colors.greenAccent,  icon: Icons.check_circle_outline,   label: 'Done'),
+      'failed'     => (color: Colors.redAccent,     icon: Icons.error_outline,           label: 'Failed'),
+      'cancelled'  => (color: Colors.orangeAccent,  icon: Icons.cancel_outlined,         label: 'Cancelled'),
+      'sending'    => (color: Colors.blueAccent,    icon: Icons.upload_rounded,          label: 'Sending'),
+      'receiving'  => (color: Colors.purpleAccent,  icon: Icons.download_rounded,        label: 'Receiving'),
+      _            => (color: Colors.white54,       icon: Icons.hourglass_empty_rounded, label: status),
+    };
   }
 
   @override
@@ -78,13 +90,7 @@ class _FilesPageState extends ConsumerState<FilesPage> {
               ),
               Expanded(
                 child: history.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No transfers yet.\nShare files from the Devices tab.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: EchoColors.pewter),
-                        ),
-                      )
+                    ? _buildEmptyState(context)
                     : groups.isEmpty
                         ? const Center(
                             child: Text(
@@ -107,11 +113,15 @@ class _FilesPageState extends ConsumerState<FilesPage> {
                                     ),
                                   ),
                                   const SizedBox(height: 8),
-                                  ...entry.value.map((t) => _TransferTile(
-                                        transfer: t,
-                                        onTap: () => _openFile(t, controller),
-                                        onDelete: () => _deleteTransfer(t.id, controller),
-                                      )),
+                                  ...entry.value.map((t) {
+                                    final meta = _statusMeta(t.status);
+                                    return _TransferTile(
+                                      transfer: t,
+                                      meta: meta,
+                                      onTap: () => _openFile(t, controller),
+                                      onDelete: () => _deleteTransfer(t.id, controller),
+                                    );
+                                  }),
                                   const SizedBox(height: 16),
                                 ],
                               );
@@ -122,6 +132,29 @@ class _FilesPageState extends ConsumerState<FilesPage> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.swap_horiz_rounded, size: 64, color: Colors.white24),
+          const SizedBox(height: 16),
+          const Text('No transfers yet', style: TextStyle(color: Colors.white54)),
+          const SizedBox(height: 8),
+          ElevatedButton.icon(
+            onPressed: () => context.go('/devices'),
+            icon: const Icon(Icons.radar),
+            label: const Text('Scan for Devices'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: EchoColors.warmGold,
+              foregroundColor: EchoColors.deepNavy,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -213,69 +246,81 @@ class _FilesPageState extends ConsumerState<FilesPage> {
 
 class _TransferTile extends StatelessWidget {
   final TransferModel transfer;
+  final ({Color color, IconData icon, String label}) meta;
   final VoidCallback onTap;
   final VoidCallback onDelete;
 
-  const _TransferTile({required this.transfer, required this.onTap, required this.onDelete});
+  const _TransferTile({
+    required this.transfer,
+    required this.meta,
+    required this.onTap,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
-    IconData icon;
-    Color iconColor;
-    switch (transfer.transferStatus) {
-      case TransferStatus.completed:
-        icon = Icons.check_circle;
-        iconColor = Colors.green;
-        break;
-      case TransferStatus.failed:
-        icon = Icons.error;
-        iconColor = Colors.red;
-        break;
-      case TransferStatus.rejected:
-        icon = Icons.block;
-        iconColor = Colors.orange;
-        break;
-      default:
-        icon = Icons.pending;
-        iconColor = EchoColors.warmGold;
-    }
-
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       color: Colors.white.withValues(alpha: 0.05),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        leading: Icon(transfer.transferDirection == TransferDirection.sending ? Icons.arrow_upward : Icons.arrow_downward, color: EchoColors.warmGold),
-        title: Text(transfer.fileName, style: const TextStyle(color: EchoColors.icyWhite)),
-        subtitle: Text(
-          '${transfer.formattedSize} • ${transfer.peerName} • ${_formatDate(transfer.startedAt)}',
-          style: const TextStyle(color: EchoColors.pewter, fontSize: 12),
+        onTap: onTap,
+        onLongPress: onDelete,
+        leading: CircleAvatar(
+          backgroundColor: meta.color.withValues(alpha: 0.15),
+          child: Icon(meta.icon, color: meta.color, size: 20),
         ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
+        title: Text(
+          transfer.fileName,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w600, color: EchoColors.icyWhite),
+        ),
+        subtitle: Text(
+          '${transfer.peerName} • ${_formatTime(transfer.startedAt)}',
+          style: const TextStyle(color: Colors.white54, fontSize: 12),
+        ),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Icon(icon, color: iconColor, size: 20),
-            const SizedBox(width: 8),
-            IconButton(
-              icon: const Icon(Icons.delete_outline, size: 20, color: EchoColors.pewter),
-              onPressed: onDelete,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: meta.color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: meta.color.withValues(alpha: 0.4)),
+              ),
+              child: Text(
+                meta.label,
+                style: TextStyle(color: meta.color, fontSize: 11),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _formatSize(transfer.fileSizeBytes),
+              style: const TextStyle(fontSize: 11, color: Colors.white38),
             ),
           ],
         ),
-        onTap: onTap,
       ),
     );
   }
 
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    if (date.year == now.year && date.month == now.month && date.day == now.day) {
-      return 'Today, ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
-    } else if (date.year == now.year && date.month == now.month && date.day == now.day - 1) {
-      return 'Yesterday, ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
+  String _formatSize(int bytes) {
+    if (bytes < 1024) return '${bytes}B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)}KB';
+    if (bytes < 1024 * 1024 * 1024) return '${(bytes / (1024 * 1024)).toStringAsFixed(1)}MB';
+    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)}GB';
+  }
+
+  String _formatTime(DateTime? dt) {
+    if (dt == null) return '—';
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
+    if (diff.inDays < 1) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
   }
 }
 
