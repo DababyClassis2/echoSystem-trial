@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../shared/widgets/glassmorphic_card.dart';
-import '../../app/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../app/theme.dart';
 import '../../core/providers/providers.dart';
+import '../../core/models/transfer_model.dart';
+import '../../shared/widgets/glassmorphic_card.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});

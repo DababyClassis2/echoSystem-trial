@@ -11,6 +11,7 @@ import 'package:uuid/uuid.dart';
 import '../../core/providers/providers.dart';
 import '../../features/profile/profile_controller.dart';
 import '../../app/theme.dart';
+import '../../core/services/storage_service.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -226,7 +227,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
           TextButton(onPressed: () {
             final newId = const Uuid().v4();
-            // storage.resetDeviceId(); (To be implemented)
             Navigator.pop(context);
           }, child: const Text('Reset', style: TextStyle(color: Colors.orange))),
         ],
