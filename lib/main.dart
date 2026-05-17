@@ -1,61 +1,72 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'app/router.dart';
 import 'app/theme.dart';
-import 'core/providers/providers.dart';
-import 'core/services/storage_service.dart';
-import 'core/services/permission_service.dart';
-import 'core/network/socket_server.dart';
-import 'features/transfer/incoming_dialog.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize storage and permissions
-  final storage = StorageService();
-  await storage.init();
-  final permissionService = PermissionService();
-  await permissionService.init();
-
-  // Request necessary permissions at startup
-  await _requestPermissions();
-
-  // Start the socket server
-  final socketServer = SocketServer();
-  final serverPort = await socketServer.start();
-  print('SocketServer started on port $serverPort');
-
-  // Listen for incoming transfers and show dialog
-  socketServer.onIncomingTransfer.listen((header) {
-    final context = _navigatorKey.currentContext;
-    if (context != null) {
-      showIncomingDialog(context, header);
-    }
-  });
+  // Capture errors and show them on screen
+  final errorNotifier = ValueNotifier<String?>(null);
+  FlutterError.onError = (details) {
+    errorNotifier.value = details.exceptionAsString();
+    print(details.exceptionAsString());
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    errorNotifier.value = error.toString();
+    return true;
+  };
 
   runApp(
     ProviderScope(
-      overrides: [
-        // Override the socketServerProvider with the instance we started
-        socketServerProvider.overrideWithValue(socketServer),
-      ],
-      child: const EchoSystemApp(),
+      child: ErrorBoundary(
+        errorNotifier: errorNotifier,
+        child: const EchoSystemApp(),
+      ),
     ),
   );
 }
 
-final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+class ErrorBoundary extends StatelessWidget {
+  final ValueNotifier<String?> errorNotifier;
+  final Widget child;
 
-Future<bool> _requestPermissions() async {
-  final statuses = await [
-    Permission.storage,
-    Permission.photos,
-    Permission.videos,
-    Permission.audio,
-    Permission.nearbyWifiDevices,
-  ].request();
-  return statuses.values.every((s) => s.isGranted);
+  const ErrorBoundary({super.key, required this.errorNotifier, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<String?>(
+      valueListenable: errorNotifier,
+      builder: (context, error, _) {
+        if (error != null) {
+          return MaterialApp(
+            home: Scaffold(
+              backgroundColor: Colors.red.shade900,
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error, size: 64, color: Colors.white),
+                      const SizedBox(height: 16),
+                      Text(
+                        'App Error:\n$error',
+                        style: const TextStyle(color: Colors.white, fontSize: 14),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+        return child;
+      },
+    );
+  }
 }
 
 class EchoSystemApp extends StatelessWidget {
@@ -67,7 +78,7 @@ class EchoSystemApp extends StatelessWidget {
       title: 'echoSystem',
       theme: EchoTheme.build(),
       routerConfig: appRouter,
-      debugShowCheckedModeBanner: false,
+      debugShowCheckedModeBanner: true,
     );
   }
 }
