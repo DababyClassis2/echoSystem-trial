@@ -2,36 +2,35 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../app/theme.dart';
 
-class ShellScaffold extends StatelessWidget {
+class ShellScaffold extends StatefulWidget {
   final Widget child;
   const ShellScaffold({super.key, required this.child});
 
+  @override
+  State<ShellScaffold> createState() => _ShellScaffoldState();
+}
+
+class _ShellScaffoldState extends State<ShellScaffold> {
+  final PageController _pageController = PageController();
   static const _tabs = ['/home', '/files', '/devices', '/profile'];
 
-  int _locationIndex(BuildContext context) {
-    final location = GoRouterState.of(context).uri.toString();
-    final idx = _tabs.indexWhere((t) => location.startsWith(t));
-    return idx < 0 ? 0 : idx;
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final idx = _locationIndex(context);
-
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(title: const Text('echoSystem')),
       drawer: _buildDrawer(context),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment.topLeft,
-            radius: 1.5,
-            colors: [EchoColors.navySlate, EchoColors.deepNavy],
-            stops: [0.0, 1.0],
-          ),
-        ),
-        child: child,
+      body: PageView(
+        controller: _pageController,
+        physics: const BouncingScrollPhysics(),
+        onPageChanged: (i) => context.go(_tabs[i]),
+        children: [widget.child], // Note: ShellRoute usually handles child
       ),
       bottomNavigationBar: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -54,13 +53,16 @@ class ShellScaffold extends StatelessWidget {
             ],
           ),
           child: BottomNavigationBar(
-            currentIndex: idx,
+            currentIndex: _locationIndex(context),
             backgroundColor: Colors.transparent,
             elevation: 0,
             selectedItemColor: EchoColors.warmGold,
             unselectedItemColor: EchoColors.pewter,
             type: BottomNavigationBarType.fixed,
-            onTap: (i) => context.go(_tabs[i]),
+            onTap: (i) {
+              _pageController.animateToPage(i, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+              context.go(_tabs[i]);
+            },
             items: const [
               BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
               BottomNavigationBarItem(icon: Icon(Icons.folder_outlined), label: 'Files'),
@@ -71,6 +73,12 @@ class ShellScaffold extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  int _locationIndex(BuildContext context) {
+    final location = GoRouterState.of(context).uri.toString();
+    final idx = _tabs.indexWhere((t) => location.startsWith(t));
+    return idx < 0 ? 0 : idx;
   }
 
   Widget _buildDrawer(BuildContext context) {
@@ -125,9 +133,6 @@ class ShellScaffold extends StatelessWidget {
             const Divider(color: EchoColors.pewter, thickness: 0.5),
             _drawerItem(Icons.settings, 'Settings', () => context.go('/settings')),
             _drawerItem(Icons.history, 'Logs', () => context.go('/logs')),
-            _drawerItem(Icons.palette, 'Themes', () => {}), // placeholder
-            _drawerItem(Icons.exit_to_app, 'Exit', () => {}, // placeholder
-            ),
           ],
         ),
       ),
@@ -139,8 +144,6 @@ class ShellScaffold extends StatelessWidget {
       leading: Icon(icon, color: EchoColors.warmGold),
       title: Text(title, style: const TextStyle(color: Colors.white)),
       onTap: onTap,
-      hoverColor: EchoColors.warmGold.withOpacity(0.1),
-      splashColor: EchoColors.warmGold.withOpacity(0.2),
     );
   }
 }

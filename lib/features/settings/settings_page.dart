@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -28,7 +30,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     _localIp = _getLocalIp();
     _serverPort = _getServerPort();
     _appVersion = _getAppVersion();
-    // Ensure profile is loaded (for device name)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(profileProvider.notifier).load();
     });
@@ -42,17 +43,49 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   Future<int> _getServerPort() async {
     final server = ref.read(socketServerProvider);
-    // If server not started, start it now
     try {
       return await server.start();
     } catch (e) {
-      return 0; // Error case
+      return 0;
     }
   }
 
   Future<String> _getAppVersion() async {
     final info = await PackageInfo.fromPlatform();
     return '${info.version} (${info.buildNumber})';
+  }
+
+  Future<void> _checkForUpdates() async {
+    try {
+      final response = await http.get(Uri.parse('https://api.github.com/repos/DababyClassis2/echoSystem-trial/releases/latest'));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final latestTag = data['tag_name'];
+        final currentInfo = await PackageInfo.fromPlatform();
+        if (latestTag != 'v${currentInfo.version}') {
+          if (mounted) _showUpdateDialog(data['html_url']);
+        } else {
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('App is up to date')));
+        }
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not check for updates')));
+    }
+  }
+
+  void _showUpdateDialog(String url) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: EchoColors.navySlate,
+        title: const Text('Update Available', style: TextStyle(color: EchoColors.icyWhite)),
+        content: const Text('A new version of echoSystem is available.', style: TextStyle(color: EchoColors.pewter)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Later')),
+          ElevatedButton(onPressed: () => launchUrl(Uri.parse(url)), child: const Text('View Release')),
+        ],
+      ),
+    );
   }
 
   @override
@@ -66,7 +99,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // General Section
           _SectionHeader('General'),
           Card(
             color: Colors.white.withOpacity(0.05),
@@ -79,14 +111,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   trailing: const Icon(Icons.edit, color: EchoColors.warmGold),
                   onTap: () => _showEditDeviceNameDialog(context, profileController),
                 ),
-                const Divider(color: EchoColors.pewter, height: 1),
                 ListTile(
                   title: const Text('Save Location', style: TextStyle(color: EchoColors.icyWhite)),
                   subtitle: Text(storage.defaultSavePath, style: const TextStyle(color: EchoColors.pewter, fontSize: 12)),
                   trailing: const Icon(Icons.folder_open, color: EchoColors.warmGold),
                   onTap: () => _showFolderPicker(context, storage),
                 ),
-                const Divider(color: EchoColors.pewter, height: 1),
                 SwitchListTile(
                   title: const Text('Enable Notifications', style: TextStyle(color: EchoColors.icyWhite)),
                   value: storage.notificationsEnabled,
@@ -100,35 +130,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Network Section
-          _SectionHeader('Network'),
+          _SectionHeader('App Updates'),
           Card(
             color: Colors.white.withOpacity(0.05),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: Column(
-              children: [
-                FutureBuilder<int>(
-                  future: _serverPort,
-                  builder: (context, snapshot) => ListTile(
-                    title: const Text('Server Port', style: TextStyle(color: EchoColors.icyWhite)),
-                    trailing: Text(snapshot.data?.toString() ?? '...', style: const TextStyle(color: EchoColors.warmGold)),
-                  ),
-                ),
-                const Divider(color: EchoColors.pewter, height: 1),
-                FutureBuilder<String>(
-                  future: _localIp,
-                  builder: (context, snapshot) => ListTile(
-                    title: const Text('Local IP Address', style: TextStyle(color: EchoColors.icyWhite)),
-                    trailing: Text(snapshot.data ?? '...', style: const TextStyle(color: EchoColors.warmGold)),
-                  ),
-                ),
-              ],
+            child: ListTile(
+              title: const Text('Check for Updates', style: TextStyle(color: EchoColors.icyWhite)),
+              trailing: const Icon(Icons.update, color: EchoColors.warmGold),
+              onTap: _checkForUpdates,
             ),
           ),
           const SizedBox(height: 16),
-
-          // Advanced Section
           _SectionHeader('Advanced'),
           Card(
             color: Colors.white.withOpacity(0.05),
@@ -140,47 +152,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   trailing: const Icon(Icons.delete_sweep, color: Colors.redAccent),
                   onTap: () => _showClearHistoryDialog(context),
                 ),
-                const Divider(color: EchoColors.pewter, height: 1),
                 ListTile(
                   title: const Text('Reset Device ID', style: TextStyle(color: EchoColors.icyWhite)),
-                  subtitle: const Text('This will generate a new anonymous identifier', style: TextStyle(color: EchoColors.pewter, fontSize: 12)),
                   trailing: const Icon(Icons.refresh, color: Colors.orange),
                   onTap: () => _showResetDeviceIdDialog(context, storage),
                 ),
-                const Divider(color: EchoColors.pewter, height: 1),
-                FutureBuilder<String>(
-                  future: _appVersion,
-                  builder: (context, snapshot) => ListTile(
-                    title: const Text('App Version', style: TextStyle(color: EchoColors.icyWhite)),
-                    trailing: Text(snapshot.data ?? '...', style: const TextStyle(color: EchoColors.pewter)),
-                  ),
-                ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-
-          // About Section
-          _SectionHeader('About'),
-          Card(
-            color: Colors.white.withOpacity(0.05),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: Column(
-              children: [
-                const ListTile(
-                  title: Text('echoSystem', style: TextStyle(color: EchoColors.warmGold, fontWeight: FontWeight.bold)),
-                  subtitle: Text('Local file sharing made premium', style: TextStyle(color: EchoColors.pewter)),
-                ),
-                const Divider(color: EchoColors.pewter, height: 1),
-                ListTile(
-                  title: const Text('GitHub Repository', style: TextStyle(color: EchoColors.icyWhite)),
-                  trailing: const Icon(Icons.open_in_new, color: EchoColors.warmGold, size: 18),
-                  onTap: () => _launchUrl('https://github.com/DababyClassis2/echoSystem-trial'),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
         ],
       ),
     );
@@ -199,20 +178,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           decoration: const InputDecoration(hintText: 'Enter device name', hintStyle: TextStyle(color: EchoColors.pewter)),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: EchoColors.warmGold)),
-          ),
-          TextButton(
-            onPressed: () {
-              if (controllerText.text.trim().isNotEmpty) {
-                controller.updateDeviceName(controllerText.text);
-                setState(() {});
-              }
-              Navigator.pop(context);
-            },
-            child: const Text('Save', style: TextStyle(color: EchoColors.warmGold)),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(onPressed: () {
+            if (controllerText.text.trim().isNotEmpty) {
+              controller.updateDeviceName(controllerText.text);
+              setState(() {});
+            }
+            Navigator.pop(context);
+          }, child: const Text('Save')),
         ],
       ),
     );
@@ -232,22 +205,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       builder: (context) => AlertDialog(
         backgroundColor: EchoColors.navySlate,
         title: const Text('Clear Transfer History?', style: TextStyle(color: EchoColors.icyWhite)),
-        content: const Text('This will permanently delete all transfer records.', style: TextStyle(color: EchoColors.pewter)),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: EchoColors.warmGold)),
-          ),
-          TextButton(
-            onPressed: () {
-              ref.read(transferHistoryProvider.notifier).clearAll();
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('History cleared')),
-              );
-            },
-            child: const Text('Clear', style: TextStyle(color: Colors.redAccent)),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(onPressed: () {
+            ref.read(transferHistoryProvider.notifier).clearAll();
+            Navigator.pop(context);
+          }, child: const Text('Clear', style: TextStyle(color: Colors.redAccent))),
         ],
       ),
     );
@@ -259,25 +222,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       builder: (context) => AlertDialog(
         backgroundColor: EchoColors.navySlate,
         title: const Text('Reset Device ID?', style: TextStyle(color: EchoColors.icyWhite)),
-        content: const Text('This will generate a new anonymous device ID. Your saved transfers and settings will remain unchanged.', style: TextStyle(color: EchoColors.pewter)),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: EchoColors.warmGold)),
-          ),
-          TextButton(
-            onPressed: () async {
-              final newId = const Uuid().v4();
-              // Patch: Access SharedPreferences directly since resetDeviceId is missing in StorageService.
-              // We'll add it in a future patch.
-              // storage.resetDeviceId(); 
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Device ID reset (Partial implementation)')),
-              );
-            },
-            child: const Text('Reset', style: TextStyle(color: EchoColors.orange)),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(onPressed: () {
+            final newId = const Uuid().v4();
+            // storage.resetDeviceId(); (To be implemented)
+            Navigator.pop(context);
+          }, child: const Text('Reset', style: TextStyle(color: Colors.orange))),
         ],
       ),
     );
@@ -303,4 +254,3 @@ class _SectionHeader extends StatelessWidget {
     );
   }
 }
-', file_path: 'lib/features/settings/settings_page.dart')
