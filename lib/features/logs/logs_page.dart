@@ -17,9 +17,10 @@ class _LogsPageState extends ConsumerState<LogsPage> {
   @override
   void initState() {
     super.initState();
-    // Ensure history is loaded
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(transferHistoryProvider.notifier).loadFromStorage();
+      if (mounted) {
+        ref.read(transferHistoryProvider.notifier).loadFromStorage();
+      }
     });
   }
 
@@ -119,9 +120,11 @@ class _LogsPageState extends ConsumerState<LogsPage> {
             onPressed: () {
               ref.read(transferHistoryProvider.notifier).clearAll();
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('All logs cleared')),
-              );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('All logs cleared')),
+                );
+              }
             },
             child: const Text('Clear', style: TextStyle(color: Colors.redAccent)),
           ),
