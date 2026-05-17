@@ -12,6 +12,7 @@ import '../../core/providers/providers.dart';
 import '../../features/profile/profile_controller.dart';
 import '../../app/theme.dart';
 import '../../core/services/storage_service.dart';
+import '../../core/models/transfer_model.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
