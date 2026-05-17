@@ -5,7 +5,7 @@
 - [x] Phase 1A – device_model.dart
 - [x] Phase 1B – transfer_model.dart
 - [x] Phase 1C – file_item_model.dart
-- [ ] Phase 2A – discovery_service.dart
+- [x] Phase 2A – discovery_service.dart
 - [ ] Phase 2B – socket_server.dart
 - [ ] Phase 2C – transfer_service.dart
 - [ ] Phase 3A – permission_service.dart
