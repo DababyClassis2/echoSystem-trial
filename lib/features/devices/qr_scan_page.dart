@@ -3,7 +3,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import '../../../core/models/device_model.dart';
+
+class DiscoveredPeer {
+  final String name;
+  final String address;
+  final int port;
+  final String platform;
+  final String source;
+
+  const DiscoveredPeer({
+    required this.name,
+    required this.address,
+    required this.port,
+    required this.platform,
+    required this.source,
+  });
+}
 
 class QrScanPage extends ConsumerWidget {
   const QrScanPage({super.key});

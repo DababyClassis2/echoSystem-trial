@@ -1,33 +1,28 @@
 import 'dart:io';
-import 'package:csv/csv.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
-import '../core/models/transfer_model.dart';
+import '../../core/models/transfer_model.dart';
 
 class TransferExportService {
-  /// Generates a CSV string from transfer history
   static String toCsv(List<TransferModel> transfers) {
-    final rows = [
-      // Header row
-      ['ID','File','Peer','Direction','Status','Size (bytes)',
-       'Speed (B/s)','Started','Completed'],
-      // Data rows
-      ...transfers.map((t) => [
+    final sb = StringBuffer();
+    sb.writeln('ID,File,Peer,Direction,Status,Size (bytes),Speed (B/s),Started,Completed');
+    for (final t in transfers) {
+      final line = [
         t.id,
         t.fileName,
         t.peerName,
-        t.direction ?? 'unknown',
+        t.direction?.name ?? 'unknown',
         t.status,
-        t.fileSize?.toString() ?? '',
+        t.fileSizeBytes,
         t.speedBytesPerSec?.toStringAsFixed(0) ?? '',
         t.startedAt?.toIso8601String() ?? '',
         t.completedAt?.toIso8601String() ?? '',
-      ]),
-    ];
-    return const ListToCsvConverter().convert(rows);
+      ].join(',');
+      sb.writeln(line);
+    }
+    return sb.toString();
   }
 
-  /// Saves CSV to Downloads and returns the file path
   static Future<String> saveCsv(List<TransferModel> transfers) async {
     final csv  = toCsv(transfers);
     final dir  = Directory('/storage/emulated/0/Download');
@@ -37,7 +32,6 @@ class TransferExportService {
     return file.path;
   }
 
-  /// Opens the system share sheet with the CSV
   static Future<void> share(List<TransferModel> transfers) async {
     final path = await saveCsv(transfers);
     await Share.shareXFiles(
@@ -46,7 +40,6 @@ class TransferExportService {
     );
   }
 
-  /// Share as plain text summary
   static Future<void> shareText(List<TransferModel> transfers) async {
     final sb = StringBuffer('echoSystem Transfer History\n');
     sb.writeln('Exported: ${DateTime.now()}\n');
