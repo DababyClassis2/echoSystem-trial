@@ -1,4 +1,4 @@
-package com.echosystem.localshare
+package com.classicbrand.echosystem
 
 import io.flutter.embedding.android.FlutterActivity
 
