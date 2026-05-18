@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import '../../core/models/device_model.dart';
+import '../../../core/models/device_model.dart';
 
 class QrScanPage extends ConsumerWidget {
   const QrScanPage({super.key});
@@ -18,12 +18,12 @@ class QrScanPage extends ConsumerWidget {
           if (code == null) return;
           try {
             final data = jsonDecode(code) as Map<String, dynamic>;
-            final peer = DeviceModel(
-              id: DateTime.now().millisecondsSinceEpoch.toString(),
-              name: data['name'] as String,
-              ipAddress: data['ip'] as String,
-              port: data['port'] as int,
-              lastSeen: DateTime.now(),
+            final peer = DiscoveredPeer(
+              name:     data['name'] as String,
+              address:  data['ip']   as String,
+              port:     data['port'] as int,
+              platform: data['platform'] as String,
+              source:   'qr',
             );
             context.pop();
             context.push('/send', extra: peer);

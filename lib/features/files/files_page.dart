@@ -66,6 +66,19 @@ class _FilesPageState extends ConsumerState<FilesPage> {
             title: const Text('Files'),
             actions: [
               if (history.isNotEmpty)
+                PopupMenuButton<String>(
+                  onSelected: (v) async {
+                    final transfers = ref.read(transferHistoryProvider).value ?? [];
+                    if (v == 'csv') await TransferExportService.share(transfers);
+                    if (v == 'text') await TransferExportService.shareText(transfers);
+                  },
+                  itemBuilder: (_) => [
+                    const PopupMenuItem(value: 'csv',  child: Text('Export CSV')),
+                    const PopupMenuItem(value: 'text', child: Text('Share as text')),
+                  ],
+                  icon: const Icon(Icons.share),
+                ),
+              if (history.isNotEmpty)
                 IconButton(
                   icon: const Icon(Icons.delete_sweep),
                   onPressed: () => _showClearAllDialog(context, controller),

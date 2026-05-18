@@ -234,6 +234,10 @@ class _ShellScaffoldState extends ConsumerState<ShellScaffold> {
                     Navigator.pop(context);
                     context.push('/logs');
                   }),
+                  _drawerItem(Icons.qr_code_rounded, 'Pair via QR', () {
+                    Navigator.pop(context);
+                    context.push('/pair');
+                  }),
                 ],
               ),
             ),

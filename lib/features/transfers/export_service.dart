@@ -1,37 +1,43 @@
 import 'dart:io';
 import 'package:csv/csv.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../core/models/transfer_model.dart';
+import '../core/models/transfer_model.dart';
 
 class TransferExportService {
+  /// Generates a CSV string from transfer history
   static String toCsv(List<TransferModel> transfers) {
     final rows = [
-      ['ID', 'File', 'Peer', 'Direction', 'Status', 'Size (bytes)',
-       'Speed (B/s)', 'Started', 'Completed'],
+      // Header row
+      ['ID','File','Peer','Direction','Status','Size (bytes)',
+       'Speed (B/s)','Started','Completed'],
+      // Data rows
       ...transfers.map((t) => [
         t.id,
         t.fileName,
         t.peerName,
-        t.direction,
+        t.direction ?? 'unknown',
         t.status,
-        t.fileSizeBytes,
+        t.fileSize?.toString() ?? '',
         t.speedBytesPerSec?.toStringAsFixed(0) ?? '',
-        t.startedAt.toIso8601String(),
+        t.startedAt?.toIso8601String() ?? '',
         t.completedAt?.toIso8601String() ?? '',
       ]),
     ];
     return const ListToCsvConverter().convert(rows);
   }
 
+  /// Saves CSV to Downloads and returns the file path
   static Future<String> saveCsv(List<TransferModel> transfers) async {
-    final csv = toCsv(transfers);
-    final dir = Directory('/storage/emulated/0/Download');
+    final csv  = toCsv(transfers);
+    final dir  = Directory('/storage/emulated/0/Download');
     final name = 'echosystem_history_${DateTime.now().millisecondsSinceEpoch}.csv';
     final file = File('${dir.path}/$name');
     await file.writeAsString(csv);
     return file.path;
   }
 
+  /// Opens the system share sheet with the CSV
   static Future<void> share(List<TransferModel> transfers) async {
     final path = await saveCsv(transfers);
     await Share.shareXFiles(
@@ -40,6 +46,7 @@ class TransferExportService {
     );
   }
 
+  /// Share as plain text summary
   static Future<void> shareText(List<TransferModel> transfers) async {
     final sb = StringBuffer('echoSystem Transfer History\n');
     sb.writeln('Exported: ${DateTime.now()}\n');
