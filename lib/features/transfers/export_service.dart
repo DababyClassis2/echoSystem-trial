@@ -11,10 +11,10 @@ class TransferExportService {
         t.id,
         t.fileName,
         t.peerName,
-        t.direction?.name ?? 'unknown',
+        t.direction.toString(),
         t.status,
         t.fileSizeBytes,
-        t.speedBytesPerSec?.toStringAsFixed(0) ?? '',
+        t.speedBytesPerSec.toStringAsFixed(0),
         t.startedAt?.toIso8601String() ?? '',
         t.completedAt?.toIso8601String() ?? '',
       ].join(',');
