@@ -7,14 +7,33 @@ import 'app/theme.dart';
 import 'core/services/storage_service.dart';
 import 'core/services/permission_service.dart';
 
-import 'core/services/background_service.dart';
-import 'package:flutter_background_service/flutter_background_service.dart';
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initBackgroundService();
-  await FlutterBackgroundService().startService();
-  runApp(const ProviderScope(child: InitializerApp()));
+  // Global error catcher for Flutter framework
+  FlutterError.onError = (FlutterErrorDetails details) {
+    _writeErrorToFile(details.exceptionAsString(), details.stack);
+    // Also print to console (if available)
+    print(details.exceptionAsString());
+    print(details.stack);
+  };
+  // Catch all uncaught async errors
+  runZonedGuarded(() {
+    runApp(const ProviderScope(child: InitializerApp()));
+  }, (error, stack) {
+    _writeErrorToFile(error.toString(), stack);
+    print(error);
+    print(stack);
+  });
+}
+
+void _writeErrorToFile(String error, StackTrace? stack) async {
+  try {
+    final dir = await getApplicationDocumentsDirectory();
+    final logFile = File('${dir.path}/echosystem_crash.log');
+    await logFile.writeAsString('$error\n$stack');
+  } catch (e) {
+    // ignore
+  }
 }
 
 class InitializerApp extends StatelessWidget {
@@ -51,7 +70,7 @@ class _InitializerScreenState extends State<InitializerScreen> {
 
   Future<void> _initialize() async {
     try {
-      setState(() { _status = 'Starting StorageService...'; _error = ''; });
+      setState(() { _status = 'Starting StorageService...'; });
       final storage = StorageService();
       await storage.init();
 
@@ -61,25 +80,18 @@ class _InitializerScreenState extends State<InitializerScreen> {
 
       setState(() { _status = 'All services ready. Starting app...'; });
       if (mounted) {
+        // Replace this screen with the main app
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (context) => const EchoSystemApp(),
+            builder: (context) => const MainApp(),
           ),
         );
       }
     } catch (e, stack) {
-      String errorMsg;
-      try {
-        final dir = await getExternalStorageDirectory();
-        final logFile = File('${dir?.path}/echoSystem_crash.log');
-        await logFile.writeAsString('$e\n$stack');
-        errorMsg = 'Error: $e\nLog saved to ${logFile.path}';
-      } catch (logError) {
-        errorMsg = 'Error: $e\n(Also failed to write log: $logError)';
-      }
+      _writeErrorToFile(e.toString(), stack);
       if (mounted) {
         setState(() {
-          _error = errorMsg;
+          _error = 'Error: $e\nCheck documents directory for full log.';
           _isLoading = false;
         });
       }
@@ -124,8 +136,8 @@ class _InitializerScreenState extends State<InitializerScreen> {
   }
 }
 
-class EchoSystemApp extends StatelessWidget {
-  const EchoSystemApp({super.key});
+class MainApp extends StatelessWidget {
+  const MainApp({super.key});
 
   @override
   Widget build(BuildContext context) {
