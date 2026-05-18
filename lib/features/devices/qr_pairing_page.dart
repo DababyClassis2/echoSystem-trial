@@ -105,7 +105,7 @@ class QrPairingPage extends ConsumerWidget {
               const SizedBox(height: 8),
               ...ifaces.map((iface) => ListTile(
                 dense: true,
-                leading: Icon(_ifaceIcon(iface.type), size: 18),
+                leading: const Icon(Icons.network_check, size: 18),
                 title: Text(iface.name, style: const TextStyle(fontSize: 13)),
                 trailing: Text(iface.address,
                   style: const TextStyle(
