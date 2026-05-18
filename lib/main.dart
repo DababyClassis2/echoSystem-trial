@@ -51,38 +51,37 @@ class _InitializerScreenState extends State<InitializerScreen> {
 
   Future<void> _initialize() async {
     try {
-      setState(() {
-        _status = 'Starting StorageService...';
-      });
+      setState(() { _status = 'Starting StorageService...'; });
       final storage = StorageService();
-      await storage.init().timeout(const Duration(seconds: 10));
-      setState(() {
-        _status = 'Starting PermissionService...';
-      });
+      await storage.init().timeout(const Duration(seconds: 15));
+
+      setState(() { _status = 'Starting PermissionService...'; });
       final permission = PermissionService();
-      await permission.init().timeout(const Duration(seconds: 5));
-      setState(() {
-        _status = 'All services ready. Starting app...';
-      });
-      
-      if (!mounted) return;
-      
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const EchoSystemApp(),
-        ),
-      );
+      await permission.init().timeout(const Duration(seconds: 15));
+
+      setState(() { _status = 'All services ready. Starting app...'; });
+      // Navigate to main app
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => const EchoSystemApp(),
+          ),
+        );
+      }
     } catch (e, stack) {
+      // Write error to file
+      String errorMsg;
       try {
         final dir = await getExternalStorageDirectory();
         final logFile = File('${dir?.path}/echoSystem_crash.log');
         await logFile.writeAsString('$e\n$stack');
-        _error = 'Error: $e\nLog saved to ${logFile.path}';
+        errorMsg = 'Error: $e\nLog saved to ${logFile.path}';
       } catch (logError) {
-        _error = 'Error: $e\n(Also failed to write log: $logError)';
+        errorMsg = 'Error: $e\n(Also failed to write log: $logError)';
       }
       if (mounted) {
         setState(() {
+          _error = errorMsg;
           _isLoading = false;
         });
       }
