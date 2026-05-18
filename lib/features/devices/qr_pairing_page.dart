@@ -18,19 +18,17 @@ class QrPairingPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ifacesAsync = ref.watch(activeInterfacesProvider);
+    final profile = ref.watch(profileProvider);
 
     return ifacesAsync.when(
       data: (ifaces) {
-        final profile = ref.watch(profileProvider);
-        final primary = ifaces.isNotEmpty ? ifaces.first : null;
-
-        final qrData = primary == null ? null : jsonEncode({
-          'ip':       primary.address,
+        final qrData = ifaces.isNotEmpty ? jsonEncode({
+          'ip':       ifaces.first.address,
           'port':     56789,
           'name':     profile.deviceName,
           'platform': Platform.operatingSystem,
           'v':        1,
-        });
+        }) : 'No Interface';
 
         return Scaffold(
           appBar: AppBar(
@@ -64,31 +62,27 @@ class QrPairingPage extends ConsumerWidget {
                 ]),
               ),
               const SizedBox(height: 32),
-              if (qrData == null)
-                const Text('No network interface available',
-                  style: TextStyle(color: Colors.redAccent))
-              else
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: QrImageView(
-                    data:            qrData,
-                    version:         QrVersions.auto,
-                    size:            220,
-                    backgroundColor: Colors.white,
-                    errorCorrectionLevel: QrErrorCorrectLevel.M,
-                    errorBuilder: (context, error) => const Text('QR Error'),
-                  ),                ),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: QrImageView(
+                  data:            qrData,
+                  version:         QrVersions.auto,
+                  size:            220,
+                  backgroundColor: Colors.white,
+                  errorCorrectionLevel: QrErrorCorrectLevel.M,
+                ),
+              ),
               const SizedBox(height: 24),
-              if (primary != null) ...[
+              if (ifaces.isNotEmpty) ...[
                 Text(profile.deviceName,
                   style: const TextStyle(
                     fontSize: 18, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 4),
-                Text('${primary.address} · ${primary.name}',
+                Text('${ifaces.first.address} · ${ifaces.first.name}',
                   style: const TextStyle(
                     fontFamily: 'monospace', color: Colors.white54, fontSize: 13)),
               ],
