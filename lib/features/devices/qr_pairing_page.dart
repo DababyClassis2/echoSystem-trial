@@ -9,12 +9,6 @@ import '../../../core/providers/providers.dart';
 class QrPairingPage extends ConsumerWidget {
   const QrPairingPage({super.key});
 
-  IconData _ifaceIcon(String type) {
-    if (type.contains('wifi')) return Icons.wifi;
-    if (type.contains('ethernet')) return Icons.settings_ethernet;
-    return Icons.lan;
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ifacesAsync = ref.watch(activeInterfacesProvider);
@@ -22,13 +16,6 @@ class QrPairingPage extends ConsumerWidget {
 
     return ifacesAsync.when(
       data: (ifaces) {
-        final qrData = ifaces.isNotEmpty ? jsonEncode({
-          'ip':       ifaces.first.address,
-          'port':     56789,
-          'name':     profile.deviceName,
-          'platform': Platform.operatingSystem,
-          'v':        1,
-        }) : 'No Interface';
 
         return Scaffold(
           appBar: AppBar(

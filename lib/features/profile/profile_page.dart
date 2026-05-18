@@ -172,7 +172,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   controller.updateNotificationsEnabled(value);
                   setState(() {});
                 },
-                activeColor: EchoColors.warmGold,
               ),
             ),
           ),

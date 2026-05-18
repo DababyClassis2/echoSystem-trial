@@ -14,7 +14,7 @@ class TransferExportService {
         t.direction ?? 'unknown',
         t.status,
         t.fileSizeBytes,
-        t.speedBytesPerSec?.toStringAsFixed(0) ?? '0',
+        (t.speedBytesPerSec ?? 0.0).toStringAsFixed(0),
         t.startedAt?.toIso8601String() ?? '',
         t.completedAt?.toIso8601String() ?? '',
       ].join(',');
