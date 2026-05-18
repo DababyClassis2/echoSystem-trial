@@ -135,16 +135,16 @@ class TransferService {
       await _socket!.flush();
       sent += chunk.length;
       final elapsedSeconds = stopwatch.elapsedMilliseconds / 1000;
-      final bytesPerSecond = elapsedSeconds > 0 ? sent / elapsedSeconds : 0;
-      final progress = TransferProgress(sent, file.sizeBytes, bytesPerSecond.toDouble());
+      final progress = TransferProgress(sent, file.sizeBytes, (elapsedSeconds > 0 ? sent / elapsedSeconds : 0).toDouble());
       _progressController?.add(progress);
 
       // Invoke background service
+      final double p = progress.fraction.toDouble();
       FlutterBackgroundService().invoke('transfer_progress', {
         'id': transferId,
         'fileName': file.name,
-        'progress': progress.fraction,
-        'speed': _fmtSpeed(bytesPerSecond),
+        'progress': p,
+        'speed': _fmtSpeed(elapsedSeconds > 0 ? sent / elapsedSeconds : 0),
       });
     }
     stopwatch.stop();

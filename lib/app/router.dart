@@ -5,6 +5,8 @@ import '../features/files/file_browser_page.dart';
 import '../features/devices/devices_page.dart';
 import '../features/profile/profile_page.dart';
 import '../features/settings/settings_page.dart';
+import '../features/devices/qr_pairing_page.dart';
+import '../features/devices/qr_scan_page.dart';
 import '../features/logs/logs_page.dart';
 import '../features/transfers/active_transfer_page.dart';
 import '../shared/widgets/shell_scaffold.dart';
@@ -44,5 +46,7 @@ final GoRouter appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       builder: (_, __) => const ActiveTransferPage(),
     ),
+    GoRoute(path: '/pair', builder: (_, __) => const QrPairingPage()),
+    GoRoute(path: '/pair/scan', builder: (_, __) => const QrScanPage()),
   ],
 );
