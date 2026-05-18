@@ -51,16 +51,15 @@ class _InitializerScreenState extends State<InitializerScreen> {
 
   Future<void> _initialize() async {
     try {
-      setState(() { _status = 'Starting StorageService...'; });
+      setState(() { _status = 'Starting StorageService...'; _error = ''; });
       final storage = StorageService();
-      await storage.init().timeout(const Duration(seconds: 15));
+      await storage.init();
 
       setState(() { _status = 'Starting PermissionService...'; });
       final permission = PermissionService();
-      await permission.init().timeout(const Duration(seconds: 15));
+      await permission.init();
 
       setState(() { _status = 'All services ready. Starting app...'; });
-      // Navigate to main app
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
@@ -69,7 +68,6 @@ class _InitializerScreenState extends State<InitializerScreen> {
         );
       }
     } catch (e, stack) {
-      // Write error to file
       String errorMsg;
       try {
         final dir = await getExternalStorageDirectory();
