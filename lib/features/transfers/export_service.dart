@@ -15,7 +15,7 @@ class TransferExportService {
         t.status,
         t.fileSizeBytes,
         (t.speedBytesPerSec ?? 0.0).toStringAsFixed(0),
-        t.startedAt?.toIso8601String() ?? '',
+        t.startedAt.toIso8601String() ?? '',
         t.completedAt?.toIso8601String() ?? '',
       ].join(',');
       sb.writeln(line);
