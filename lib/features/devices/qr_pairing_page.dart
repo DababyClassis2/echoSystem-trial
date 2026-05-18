@@ -69,7 +69,19 @@ class QrPairingPage extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: QrImageView(
-                  data:            qrData,
+                  data: ifacesAsync.when(
+                    data: (list) => list.isNotEmpty 
+                        ? jsonEncode({
+                            'ip':       list.first.address,
+                            'port':     56789,
+                            'name':     profile.deviceName,
+                            'platform': Platform.operatingSystem,
+                            'v':        1,
+                          }) 
+                        : 'No Interface',
+                    loading: () => 'Loading...',
+                    error: (e, s) => 'Error',
+                  ),
                   version:         QrVersions.auto,
                   size:            220,
                   backgroundColor: Colors.white,
