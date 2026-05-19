@@ -30,7 +30,7 @@ class EchoSystemApp extends StatelessWidget {
               home: Scaffold(
                 body: Center(
                   child: Text(
-                    'Error loading settings: ${settings?.error ?? 'Unknown error'}',
+                    'Error loading settings: ${settings.error ?? 'Unknown error'}',
                   ),
                 ),
               ),
@@ -39,7 +39,7 @@ class EchoSystemApp extends StatelessWidget {
           }
 
           // Handle data state safely
-          final settingsData = settings?.value;
+          final settingsData = settings.value;
           if (settingsData == null) {
             // Defensive fallback in case value is unexpectedly null
             return const MaterialApp(
