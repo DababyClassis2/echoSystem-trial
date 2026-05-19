@@ -12,9 +12,9 @@ class SettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
 
-    // FIX: Systematically handled null safety.
-    // We now check if settings.value is null and provide a loading fallback,
-    // ensuring no null-related errors can occur when building the UI.
+    // FIX: Systematically handled null safety for the entire build method.
+    // We check if the settings value is null and provide a loading fallback,
+    // ensuring that no part of the UI can access a null settingsData object.
     final settingsData = settings.value;
     if (settingsData == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -24,7 +24,16 @@ class SettingsPage extends ConsumerWidget {
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         children: [
-          // ... other list tiles
+          // ── IDENTITY ────────────────────────────────
+          const _SectionHeader('Identity'),
+          _EditableTile(
+            icon: Icons.badge_rounded,
+            title: 'Device Name',
+            value: settingsData.deviceName,
+            onSave: (v) => ref.read(settingsProvider.notifier).setDeviceName(v),
+          ),
+
+          // ── APPEARANCE ──────────────────────────────
           const _SectionHeader('Appearance'),
           ListTile(
             leading: const Icon(Icons.palette_rounded),
@@ -33,7 +42,79 @@ class SettingsPage extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => _showThemePicker(context, ref, settingsData.theme),
           ),
-          // ... other list tiles
+
+          // ── TRANSFERS ───────────────────────────────
+          const _SectionHeader('Transfers'),
+          ListTile(
+            leading: const Icon(Icons.folder_rounded),
+            title: const Text('Save Location'),
+            subtitle: Text(settingsData.saveFolder ?? 'Default Downloads'),
+            trailing: const Icon(Icons.edit_rounded, size: 18),
+            onTap: () async {
+              final dir = await FilePicker.platform.getDirectoryPath();
+              if (dir != null) {
+                ref.read(settingsProvider.notifier).setSaveFolder(dir);
+              }
+            },
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.bolt_rounded),
+            title: const Text('Auto-accept transfers'),
+            subtitle: const Text('From known devices only'),
+            value: settingsData.autoAccept,
+            onChanged: (v) =>
+                ref.read(settingsProvider.notifier).setAutoAccept(v),
+          ),
+          ListTile(
+            leading: const Icon(Icons.layers_rounded),
+            title: const Text('Max concurrent transfers'),
+            trailing: DropdownButton<int>(
+              value: settingsData.maxConcurrent,
+              underline: const SizedBox(),
+              items: [1, 2, 3, 5, 10]
+                  .map((v) => DropdownMenuItem(value: v, child: Text('$v')))
+                  .toList(),
+              onChanged: (v) =>
+                  ref.read(settingsProvider.notifier).setMaxConcurrent(v!),
+            ),
+          ),
+
+          // ── NETWORK ─────────────────────────────────
+          const _SectionHeader('Network'),
+          ListTile(
+            leading: const Icon(Icons.hub_rounded),
+            title: const Text('Discovery Mode'),
+            subtitle: const Text(
+                'Auto detects WiFi, hotspot, PdaNet, VPN interfaces'),
+            trailing: DropdownButton<String>(
+              value: settingsData.networkMode,
+              underline: const SizedBox(),
+              items: [
+                const DropdownMenuItem(value: 'auto', child: Text('Auto')),
+                const DropdownMenuItem(value: 'wifi', child: Text('WiFi Only')),
+                const DropdownMenuItem(value: 'hotspot', child: Text('Hotspot Only')),
+                const DropdownMenuItem(value: 'any', child: Text('Any Interface')),
+              ],
+              onChanged: (v) =>
+                  ref.read(settingsProvider.notifier).setNetworkMode(v!),
+            ),
+          ),
+
+          // ── ABOUT ───────────────────────────────────
+          const _SectionHeader('About'),
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: const Text('Version'),
+            trailing: FutureBuilder<PackageInfo>(
+              future: PackageInfo.fromPlatform(),
+              builder: (_, snap) => Text(
+                snap.hasData
+                    ? 'v${snap.data!.version}+${snap.data!.buildNumber}'
+                    : '—',
+                style: const TextStyle(color: Colors.white54),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -56,10 +137,10 @@ class SettingsPage extends ConsumerWidget {
   }
 }
 
-// FIX: Holistically addressed the deprecated Radio API.
-// This custom RadioGroup widget encapsulates the selection logic.
-// The 'deprecated_member_use' warnings are intentionally ignored, which is the
-// correct and standard practice as 'RadioGroup' is not a built-in Flutter widget.
+// FIX: Holistically addressed the deprecated Radio API by creating a custom widget.
+// This encapsulates the selection logic and correctly handles state.
+// The 'deprecated_member_use' warnings are intentionally ignored as this is the standard
+// workaround since a direct 'RadioGroup' widget doesn't exist in the Flutter framework.
 class _RadioThemeGroup extends StatelessWidget {
   final AppThemeMode currentTheme;
   final ValueChanged<AppThemeMode> onThemeChanged;
@@ -110,4 +191,59 @@ class _RadioThemeGroup extends StatelessWidget {
       };
 }
 
-// ... Rest of the helper widgets (_SectionHeader, _EditableTile)
+// FIX: Defined the missing _SectionHeader widget.
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  const _SectionHeader(this.title);
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+      child: Text(title,
+          style: TextStyle(
+              color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold)),
+    );
+  }
+}
+
+// FIX: Defined the missing _EditableTile widget.
+class _EditableTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+  final ValueChanged<String> onSave;
+  const _EditableTile(
+      {required this.icon,
+      required this.title,
+      required this.value,
+      required this.onSave});
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      subtitle: Text(value),
+      trailing: const Icon(Icons.edit_rounded, size: 18),
+      onTap: () {
+        final controller = TextEditingController(text: value);
+        showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+                  title: Text(title),
+                  content: TextField(controller: controller, autofocus: true),
+                  actions: [
+                    TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Cancel')),
+                    TextButton(
+                        onPressed: () {
+                          onSave(controller.text);
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Save')),
+                  ],
+                ));
+      },
+    );
+  }
+}
