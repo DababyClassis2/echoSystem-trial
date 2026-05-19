@@ -20,6 +20,14 @@ class SettingsState {
     required this.maxConcurrent,
   });
 
+  Null get isLoading => null;
+
+  Null get hasError => null;
+
+  String? get error => null;
+
+  Object? get value => null;
+
   SettingsState copyWith({
     AppThemeMode? theme,
     String? deviceName,

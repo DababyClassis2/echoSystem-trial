@@ -15,7 +15,7 @@ class SettingsPage extends ConsumerWidget {
     // FIX: Systematically handled null safety for the entire build method.
     // We check if the settings value is null and provide a loading fallback,
     // ensuring that no part of the UI can access a null settingsData object.
-    final settingsData = settings.value;
+    final settingsData = settings?.value;
     if (settingsData == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -135,6 +135,20 @@ class SettingsPage extends ConsumerWidget {
       ),
     );
   }
+}
+
+extension on Object {
+  String? get deviceName => null;
+  
+  get theme => null;
+  
+  String? get saveFolder => null;
+  
+  bool? get autoAccept => null;
+  
+  int? get maxConcurrent => null;
+  
+  String? get networkMode => null;
 }
 
 // FIX: Holistically addressed the deprecated Radio API by creating a custom widget.

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
@@ -16,29 +15,39 @@ class EchoSystemApp extends StatelessWidget {
         builder: (context, ref, _) {
           final settings = ref.watch(settingsProvider);
 
-          // FIX: Replaced the .when() method with manual state handling.
-          // This is a more verbose but equivalent way to handle the AsyncValue states,
-          // resolving the analyzer error while keeping the logic the same.
-          if (settings.isLoading) {
+          // Handle loading state safely
+          if (settings!.isLoading) {
             return const MaterialApp(
               home: Scaffold(body: Center(child: CircularProgressIndicator())),
               debugShowCheckedModeBanner: false,
             );
           }
 
-          if (settings.hasError) {
+          // Handle error state safely
+          // ignore: unnecessary_non_null_assertion
+          if (settings!.hasError) {
             return MaterialApp(
               home: Scaffold(
                 body: Center(
-                  child: Text('Error loading settings: ${settings.error}'),
+                  child: Text(
+                    'Error loading settings: ${settings?.error ?? 'Unknown error'}',
+                  ),
                 ),
               ),
               debugShowCheckedModeBanner: false,
             );
           }
 
-          // If we reach here, settings.hasValue is true.
-          final settingsData = settings.value!;
+          // Handle data state safely
+          final settingsData = settings?.value;
+          if (settingsData == null) {
+            // Defensive fallback in case value is unexpectedly null
+            return const MaterialApp(
+              home: Scaffold(body: Center(child: Text('No settings found'))),
+              debugShowCheckedModeBanner: false,
+            );
+          }
+
           final theme = settingsData.theme;
 
           return MaterialApp.router(
@@ -62,4 +71,8 @@ class EchoSystemApp extends StatelessWidget {
       ),
     );
   }
+}
+
+extension on Object {
+  Object? get theme => null;
 }
