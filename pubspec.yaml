@@ -17,7 +17,6 @@ dependencies:
   path_provider: ^2.1.4
   shared_preferences: ^2.5.3
   flex_color_scheme: ^7.3.1
-  # Downgraded to a version compatible with a broader range of Dart SDKs.
   flutter_local_notifications: ^19.5.0
   flutter_background_service: ^5.0.9
   awesome_notifications: ^0.9.3
@@ -45,3 +44,11 @@ dev_dependencies:
   riverpod_generator: ^2.4.0
   hive_generator: ^2.0.1
   flutter_launcher_icons: ^0.13.1
+
+# FIX: Added the missing configuration for flutter_launcher_icons.
+# This tells the build process where to find your app icon and how to generate
+# the necessary launcher icons for Android and iOS, resolving the build failure.
+flutter_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon/icon.png"
