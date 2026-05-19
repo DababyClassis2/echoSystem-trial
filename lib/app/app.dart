@@ -16,39 +16,47 @@ class EchoSystemApp extends StatelessWidget {
         builder: (context, ref, _) {
           final settings = ref.watch(settingsProvider);
 
-          return settings.when(
-            data: (settingsData) {
-              final theme = settingsData.theme;
-
-              return MaterialApp.router(
-                title: 'echoSystem',
-                theme: FlexThemeData.light(scheme: FlexScheme.aquaBlue),
-                darkTheme: theme == AppThemeMode.amoled
-                    ? FlexThemeData.dark(scheme: FlexScheme.aquaBlue)
-                        .copyWith(scaffoldBackgroundColor: Colors.black)
-                    : FlexThemeData.dark(scheme: FlexScheme.aquaBlue),
-                themeMode: switch (theme) {
-                  AppThemeMode.light => ThemeMode.light,
-                  AppThemeMode.dark => ThemeMode.dark,
-                  AppThemeMode.amoled => ThemeMode.dark,
-                  AppThemeMode.system => ThemeMode.system,
-                },
-                routerConfig: appRouter,
-                debugShowCheckedModeBanner: false,
-              );
-            },
-            loading: () => const MaterialApp(
+          // FIX: Replaced the .when() method with manual state handling.
+          // This is a more verbose but equivalent way to handle the AsyncValue states,
+          // resolving the analyzer error while keeping the logic the same.
+          if (settings.isLoading) {
+            return const MaterialApp(
               home: Scaffold(body: Center(child: CircularProgressIndicator())),
               debugShowCheckedModeBanner: false,
-            ),
-            error: (error, stackTrace) => MaterialApp(
+            );
+          }
+
+          if (settings.hasError) {
+            return MaterialApp(
               home: Scaffold(
                 body: Center(
-                  child: Text('Error loading settings: $error'),
+                  child: Text('Error loading settings: ${settings.error}'),
                 ),
               ),
               debugShowCheckedModeBanner: false,
-            ),
+            );
+          }
+
+          // If we reach here, settings.hasValue is true.
+          final settingsData = settings.value!;
+          final theme = settingsData.theme;
+
+          return MaterialApp.router(
+            title: 'echoSystem',
+            theme: FlexThemeData.light(scheme: FlexScheme.aquaBlue),
+            darkTheme: theme == AppThemeMode.amoled
+                ? FlexThemeData.dark(scheme: FlexScheme.aquaBlue)
+                    .copyWith(scaffoldBackgroundColor: Colors.black)
+                : FlexThemeData.dark(scheme: FlexScheme.aquaBlue),
+            themeMode: switch (theme) {
+              AppThemeMode.light => ThemeMode.light,
+              AppThemeMode.dark => ThemeMode.dark,
+              AppThemeMode.amoled => ThemeMode.dark,
+              AppThemeMode.system => ThemeMode.system,
+              _ => ThemeMode.system,
+            },
+            routerConfig: appRouter,
+            debugShowCheckedModeBanner: false,
           );
         },
       ),

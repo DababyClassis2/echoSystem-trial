@@ -45,7 +45,7 @@ void onServiceStart(ServiceInstance service) async {
       id.hashCode,
       'Transferring: $fileName',
       '${(progress * 100).toStringAsFixed(0)}% · $speed',
-      NotificationDetails(
+      const NotificationDetails(
         android: AndroidNotificationDetails(
           'echosystem_transfers',
           'File Transfers',
@@ -54,7 +54,7 @@ void onServiceStart(ServiceInstance service) async {
           priority: Priority.low,
           showProgress: true,
           maxProgress: 100,
-          progress: (progress * 100).toInt(),
+          progress: 0,
           onlyAlertOnce: true,
           ongoing: true,
         ),

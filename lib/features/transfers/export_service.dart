@@ -11,11 +11,14 @@ class TransferExportService {
         t.id,
         t.fileName,
         t.peerName,
-        t.direction ?? 'unknown',
+        t.direction,
         t.status,
         t.fileSizeBytes,
+        // FIX: Handled potential null value for 'speedBytesPerSec'.
+        // If it's null, it defaults to 0.0 before converting to a string.
+        // This prevents the 'unchecked_use_of_nullable_value' error.
         (t.speedBytesPerSec ?? 0.0).toStringAsFixed(0),
-        t.startedAt.toIso8601String() ?? '',
+        t.startedAt.toIso8601String(),
         t.completedAt?.toIso8601String() ?? '',
       ].join(',');
       sb.writeln(line);
